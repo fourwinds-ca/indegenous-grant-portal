@@ -141,6 +141,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Grant discovery routes (protected)
+  app.post("/api/admin/discover-grants", isAuthenticated, async (req: any, res) => {
+    try {
+      // This would trigger the Python grant discovery script
+      const { spawn } = require('child_process');
+      
+      const discovery = spawn('python', ['server/grant_discovery.py'], {
+        cwd: process.cwd()
+      });
+      
+      let output = '';
+      let errorOutput = '';
+      
+      discovery.stdout.on('data', (data: Buffer) => {
+        output += data.toString();
+      });
+      
+      discovery.stderr.on('data', (data: Buffer) => {
+        errorOutput += data.toString();
+      });
+      
+      discovery.on('close', (code: number) => {
+        if (code === 0) {
+          // After discovery, run the importer
+          const importer = spawn('python', ['server/grant_importer.py'], {
+            cwd: process.cwd()
+          });
+          
+          let importOutput = '';
+          
+          importer.stdout.on('data', (data: Buffer) => {
+            importOutput += data.toString();
+          });
+          
+          importer.on('close', (importCode: number) => {
+            if (importCode === 0) {
+              res.json({ 
+                success: true, 
+                message: "Grant discovery and import completed successfully",
+                discoveryOutput: output,
+                importOutput: importOutput
+              });
+            } else {
+              res.status(500).json({ 
+                success: false, 
+                message: "Grant import failed",
+                discoveryOutput: output,
+                importOutput: importOutput
+              });
+            }
+          });
+        } else {
+          res.status(500).json({ 
+            success: false, 
+            message: "Grant discovery failed", 
+            error: errorOutput 
+          });
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error running grant discovery:", error);
+      res.status(500).json({ message: "Failed to start grant discovery" });
+    }
+  });
+
+  // Generate test data route (for development)
+  app.post("/api/admin/generate-test-grants", isAuthenticated, async (req: any, res) => {
+    try {
+      const { spawn } = require('child_process');
+      
+      // Generate test data
+      const generator = spawn('python', ['server/test_grant_data.py'], {
+        cwd: process.cwd()
+      });
+      
+      generator.on('close', (code: number) => {
+        if (code === 0) {
+          // Import the test data
+          const importer = spawn('python', ['server/grant_importer.py'], {
+            cwd: process.cwd()
+          });
+          
+          let importOutput = '';
+          
+          importer.stdout.on('data', (data: Buffer) => {
+            importOutput += data.toString();
+          });
+          
+          importer.on('close', (importCode: number) => {
+            if (importCode === 0) {
+              res.json({ 
+                success: true, 
+                message: "Test grants generated and imported successfully",
+                output: importOutput
+              });
+            } else {
+              res.status(500).json({ 
+                success: false, 
+                message: "Test grant import failed" 
+              });
+            }
+          });
+        } else {
+          res.status(500).json({ 
+            success: false, 
+            message: "Test grant generation failed" 
+          });
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error generating test grants:", error);
+      res.status(500).json({ message: "Failed to generate test grants" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
