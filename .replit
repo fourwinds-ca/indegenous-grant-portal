@@ -22,6 +22,10 @@ externalPort = 80
 localPort = 5173
 externalPort = 80
 
+[[ports]]
+localPort = 38437
+externalPort = 3000
+
 [agent]
 expertMode = true
 integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_database:1.0.0", "web_scraper:1.0.0"]
