@@ -1,16 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import GrantCard from "./GrantCard";
+import { mockGrants } from "../lib/mockData";
 
 export default function GrantsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("lastUpdated");
 
-  const { data: grants = [], isLoading, error } = useQuery({
-    queryKey: ["/api/grants"],
-    refetchOnWindowFocus: false,
-  });
+  // Use mock data instead of API call
+  const grants = mockGrants;
+  const isLoading = false;
+  const error = null;
 
   const categories = [
     "All Categories",

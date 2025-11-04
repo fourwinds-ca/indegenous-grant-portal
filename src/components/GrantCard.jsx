@@ -1,7 +1,10 @@
+import { FaDollarSign, FaCalendarAlt, FaBuilding, FaExternalLinkAlt } from "react-icons/fa";
+
 export default function GrantCard({ grant, onApply }) {
   const formatAmount = (amount) => {
     if (!amount) return "Amount not specified";
-    return `${amount} CAD`;
+    const formatted = Number(amount).toLocaleString('en-CA');
+    return `$${formatted} CAD`;
   };
 
   const formatDate = (dateString) => {
@@ -52,18 +55,34 @@ export default function GrantCard({ grant, onApply }) {
 
       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
         <div>
-          <span className="font-medium text-gray-600">Funding Amount:</span>
+          <div className="flex items-center space-x-2 mb-1">
+            <FaDollarSign className="text-green-600" />
+            <span className="font-medium text-gray-600">Funding Amount:</span>
+          </div>
           <p className="text-lg font-semibold text-green-600">
             {formatAmount(grant.amount)}
           </p>
         </div>
         <div>
-          <span className="font-medium text-gray-600">Deadline:</span>
+          <div className="flex items-center space-x-2 mb-1">
+            <FaCalendarAlt className="text-blue-600" />
+            <span className="font-medium text-gray-600">Deadline:</span>
+          </div>
           <p className="text-gray-900">
             {formatDate(grant.deadline)}
           </p>
         </div>
       </div>
+
+      {grant.program && (
+        <div className="mb-4 flex items-start space-x-2">
+          <FaBuilding className="text-gray-500 mt-1 flex-shrink-0" />
+          <div>
+            <span className="font-medium text-gray-600 block">Program:</span>
+            <p className="text-sm text-gray-700">{grant.program}</p>
+          </div>
+        </div>
+      )}
 
       {grant.eligibility && (
         <div className="mb-4">
@@ -81,9 +100,10 @@ export default function GrantCard({ grant, onApply }) {
               href={grant.applicationLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1"
             >
-              View Details →
+              <span>View Details</span>
+              <FaExternalLinkAlt className="w-3 h-3" />
             </a>
           )}
         </div>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Grant Discovery Service for First Nations Grants Tracker
+Grant Discovery Service for Indigenous Grants Tracker
 
 This service crawls Canadian government websites to discover grant opportunities
 and extracts relevant information for the grants database.
@@ -31,7 +31,7 @@ GOVERNMENT_GRANT_SOURCES = [
             "https://www.canada.ca/en/government/grants-funding.html",
             "https://search.open.canada.ca/grants/"
         ],
-        "keywords": ["indigenous", "first nations", "aboriginal", "metis", "inuit"]
+        "keywords": ["indigenous", "Indigenous", "aboriginal", "metis", "inuit"]
     },
     {
         "name": "Crown-Indigenous Relations",
@@ -188,7 +188,7 @@ class GrantDiscoveryService:
         """Extract eligibility criteria"""
         eligibility_keywords = [
             'eligib', 'criteria', 'qualify', 'requirement', 'must be', 
-            'first nations', 'indigenous', 'aboriginal', 'metis', 'inuit'
+            'Indigenous', 'indigenous', 'aboriginal', 'metis', 'inuit'
         ]
         
         lines = text.split('\n')
@@ -292,7 +292,7 @@ class GrantDiscoveryService:
 
 def main():
     """Main function to run grant discovery"""
-    print("Starting First Nations Grant Discovery...")
+    print("Starting Indigenous Grant Discovery...")
     
     discovery_service = GrantDiscoveryService()
     grants = discovery_service.discover_grants_from_sources()

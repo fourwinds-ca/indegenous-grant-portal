@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./supabaseAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -12,7 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ 
       status: 'healthy', 
       timestamp: new Date().toISOString(),
-      server: 'First Nations Grants Tracker'
+      server: 'Indigenous Grants Tracker'
     });
   });
 
