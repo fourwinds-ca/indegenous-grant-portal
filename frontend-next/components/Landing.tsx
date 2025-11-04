@@ -11,9 +11,6 @@ import {
   FaCalendarAlt,
   FaArrowRight,
   FaTimes,
-  FaGoogle,
-  FaGithub,
-  FaMicrosoft,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import GrantsList from './GrantsList';
@@ -30,7 +27,7 @@ const Landing: React.FC = () => {
   const [authMessage, setAuthMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const { signInWithEmail, signUpWithEmail, signInWithOAuth, user } = useAuth();
+  const { signInWithEmail, signUpWithEmail, user } = useAuth();
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,14 +60,6 @@ const Landing: React.FC = () => {
       setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleOAuthSignIn = async (provider: 'google' | 'github' | 'azure') => {
-    try {
-      await signInWithOAuth(provider);
-    } catch (err: any) {
-      setError(err.message || 'OAuth sign-in failed. Please try again.');
     }
   };
 
@@ -474,37 +463,7 @@ const Landing: React.FC = () => {
               </button>
             </form>
 
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <button
-                onClick={() => handleOAuthSignIn('google')}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                <FaGoogle className="text-red-500" />
-              </button>
-              <button
-                onClick={() => handleOAuthSignIn('github')}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                <FaGithub className="text-gray-800" />
-              </button>
-              <button
-                onClick={() => handleOAuthSignIn('azure')}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                <FaMicrosoft className="text-blue-600" />
-              </button>
-            </div>
-
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-600 mt-6">
               {authMode === 'signin' ? (
                 <p>
                   Don't have an account?{' '}
