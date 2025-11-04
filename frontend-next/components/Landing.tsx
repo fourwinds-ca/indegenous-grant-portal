@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import GrantsList from './GrantsList';
+import { addTrackedGrant } from '@/lib/trackedGrants';
 
 const Landing: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -25,8 +26,11 @@ const Landing: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingGrantId, setPendingGrantId] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const { signInWithEmail, signUpWithEmail, signInWithOAuth } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithOAuth, user } = useAuth();
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +38,24 @@ const Landing: React.FC = () => {
     setIsLoading(true);
 
     try {
+      let userData;
       if (authMode === 'signin') {
-        await signInWithEmail({ email, password });
+        userData = await signInWithEmail({ email, password });
       } else {
-        await signUpWithEmail({ email, password });
+        userData = await signUpWithEmail({ email, password });
       }
+
+      // If there's a pending grant, track it
+      if (pendingGrantId && userData?.user?.id) {
+        addTrackedGrant(userData.user.id, pendingGrantId);
+        setSuccessMessage('Grant successfully added to your tracking list!');
+        setPendingGrantId(null);
+        setAuthMessage('');
+
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccessMessage(''), 5000);
+      }
+
       setShowAuthModal(false);
       setEmail('');
       setPassword('');
@@ -54,6 +71,21 @@ const Landing: React.FC = () => {
       await signInWithOAuth(provider);
     } catch (err: any) {
       setError(err.message || 'OAuth sign-in failed. Please try again.');
+    }
+  };
+
+  const handleTrackApplication = (grantId: string) => {
+    if (user) {
+      // User is already authenticated, track immediately
+      addTrackedGrant(user.id, grantId);
+      setSuccessMessage('Grant successfully added to your tracking list!');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } else {
+      // User not authenticated, show auth modal
+      setPendingGrantId(grantId);
+      setAuthMode('signup');
+      setAuthMessage('Please sign in to track this grant application');
+      setShowAuthModal(true);
     }
   };
 
@@ -110,6 +142,24 @@ const Landing: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Success Message Banner */}
+      {successMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4">
+          <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-lg shadow-lg flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FaCheckCircle className="text-green-600 text-xl" />
+              <p className="font-medium">{successMessage}</p>
+            </div>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="text-green-600 hover:text-green-800"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Navigation Header */}
       <header className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -254,7 +304,7 @@ const Landing: React.FC = () => {
             </p>
           </div>
 
-          <GrantsList />
+          <GrantsList onTrackApplication={handleTrackApplication} />
         </div>
       </section>
 
@@ -359,6 +409,8 @@ const Landing: React.FC = () => {
               onClick={() => {
                 setShowAuthModal(false);
                 setError('');
+                setAuthMessage('');
+                setPendingGrantId(null);
               }}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
@@ -370,9 +422,9 @@ const Landing: React.FC = () => {
                 {authMode === 'signin' ? 'Welcome Back' : 'Create Account'}
               </h3>
               <p className="text-gray-600">
-                {authMode === 'signin'
+                {authMessage || (authMode === 'signin'
                   ? 'Sign in to access your dashboard'
-                  : 'Start your funding journey today'}
+                  : 'Start your funding journey today')}
               </p>
             </div>
 
@@ -460,6 +512,7 @@ const Landing: React.FC = () => {
                     onClick={() => {
                       setAuthMode('signup');
                       setError('');
+                      setAuthMessage('');
                     }}
                     className="text-teal-600 font-semibold hover:text-teal-700"
                   >
@@ -473,6 +526,7 @@ const Landing: React.FC = () => {
                     onClick={() => {
                       setAuthMode('signin');
                       setError('');
+                      setAuthMessage('');
                     }}
                     className="text-teal-600 font-semibold hover:text-teal-700"
                   >

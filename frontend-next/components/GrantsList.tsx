@@ -6,7 +6,11 @@ import { mockGrants } from '@/lib/mockData';
 
 type SortOption = 'recent' | 'deadline' | 'amount' | 'title';
 
-const GrantsList: React.FC = () => {
+interface GrantsListProps {
+  onTrackApplication?: (grantId: string) => void;
+}
+
+const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
@@ -23,9 +27,13 @@ const GrantsList: React.FC = () => {
   ];
 
   const handleApply = (grantId: string) => {
-    console.log('Tracking application for grant:', grantId);
-    // This would typically navigate to an application form or modal
-    alert(`Tracking application for grant ID: ${grantId}`);
+    if (onTrackApplication) {
+      onTrackApplication(grantId);
+    } else {
+      console.log('Tracking application for grant:', grantId);
+      // This would typically navigate to an application form or modal
+      alert(`Tracking application for grant ID: ${grantId}`);
+    }
   };
 
   const filteredAndSortedGrants = useMemo(() => {
