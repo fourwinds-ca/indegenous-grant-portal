@@ -227,8 +227,24 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Grants Section */}
       <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Explore Available Grants
+            </h3>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Browse our comprehensive database of funding opportunities
+            </p>
+          </div>
+
+          <GrantsList onTrackApplication={handleTrackApplication} />
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -255,7 +271,7 @@ const Landing: React.FC = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -278,22 +294,6 @@ const Landing: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Grants Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Explore Available Grants
-            </h3>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Browse our comprehensive database of funding opportunities
-            </p>
-          </div>
-
-          <GrantsList onTrackApplication={handleTrackApplication} />
         </div>
       </section>
 
