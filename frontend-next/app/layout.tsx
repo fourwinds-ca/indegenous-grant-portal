@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: "Green Buffalo Indigenous Grant Portal",
   description: "Simplify your path to Indigenous funding. Discover, track, and manage grant opportunities for Indigenous communities across Canada.",
   keywords: ["Indigenous grants", "Indigenous funding", "Canadian grants", "First Nations", "Inuit", "Métis"],
+  icons: {
+    icon: '/greenbuffalo_logo.png',
+    shortcut: '/greenbuffalo_logo.png',
+    apple: '/greenbuffalo_logo.png',
+  },
 };
 
 export default function RootLayout({
