@@ -17,13 +17,10 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
 
   const categories = [
     'All Categories',
-    'Housing',
-    'Economic Development',
-    'Education',
-    'Health',
-    'Culture and Language',
     'Environment',
-    'Community',
+    'Infrastructure',
+    'Electric Vehicles',
+    'Economic Development',
   ];
 
   const handleApply = (grantId: string) => {

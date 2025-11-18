@@ -21,13 +21,10 @@ interface GrantCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Housing': 'bg-blue-100 text-blue-800 border-blue-300',
-  'Economic Development': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'Education': 'bg-purple-100 text-purple-800 border-purple-300',
-  'Health': 'bg-red-100 text-red-800 border-red-300',
-  'Culture and Language': 'bg-amber-100 text-amber-800 border-amber-300',
   'Environment': 'bg-green-100 text-green-800 border-green-300',
-  'Community': 'bg-teal-100 text-teal-800 border-teal-300',
+  'Infrastructure': 'bg-slate-100 text-slate-800 border-slate-300',
+  'Electric Vehicles': 'bg-cyan-100 text-cyan-800 border-cyan-300',
+  'Economic Development': 'bg-emerald-100 text-emerald-800 border-emerald-300',
 };
 
 const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
