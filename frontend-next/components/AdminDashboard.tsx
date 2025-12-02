@@ -653,20 +653,24 @@ const AdminDashboard: React.FC = () => {
 
       {/* Add Grant Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6 my-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Grant</h2>
-            <GrantForm onSubmit={handleAddGrant} submitLabel="Add Grant" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <div className="min-h-full flex items-start justify-center p-4 py-8">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Grant</h2>
+              <GrantForm onSubmit={handleAddGrant} submitLabel="Add Grant" />
+            </div>
           </div>
         </div>
       )}
 
       {/* Edit Grant Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6 my-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Edit Grant</h2>
-            <GrantForm onSubmit={handleEditGrant} submitLabel="Save Changes" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <div className="min-h-full flex items-start justify-center p-4 py-8">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Edit Grant</h2>
+              <GrantForm onSubmit={handleEditGrant} submitLabel="Save Changes" />
+            </div>
           </div>
         </div>
       )}
