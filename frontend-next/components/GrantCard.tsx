@@ -1,7 +1,9 @@
 "use client";
 
 import React from 'react';
-import { FaDollarSign, FaCalendarAlt, FaBuilding, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaDollarSign, FaCalendarAlt, FaBuilding, FaExternalLinkAlt, FaBookmark, FaCheck } from 'react-icons/fa';
+import { useAuth } from '@/hooks/useAuth';
+import { isGrantTracked } from '@/lib/trackedGrants';
 
 interface GrantCardProps {
   grant: {
@@ -28,6 +30,9 @@ const categoryColors: Record<string, string> = {
 };
 
 const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
+  const { user } = useAuth();
+  const tracked = user ? isGrantTracked(user.id, grant.id) : false;
+
   const formatCurrency = (amount: string): string => {
     const numAmount = parseFloat(amount);
     return new Intl.NumberFormat('en-CA', {
@@ -117,12 +122,23 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-auto">
-          <button
-            onClick={handleApply}
-            className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 text-sm"
-          >
-            Track Application
-          </button>
+          {tracked ? (
+            <button
+              disabled
+              className="flex-1 flex items-center justify-center gap-2 bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-md cursor-default text-sm border border-green-300"
+            >
+              <FaCheck />
+              Tracked
+            </button>
+          ) : (
+            <button
+              onClick={handleApply}
+              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 text-sm"
+            >
+              <FaBookmark />
+              Track Grant
+            </button>
+          )}
           <a
             href={grant.applicationLink}
             target="_blank"

@@ -1,3 +1,5 @@
+export type DeadlineType = 'fixed' | 'ongoing' | 'periodic' | 'annual' | 'program_end' | 'closed';
+
 // Grant type definition matching the database schema
 export interface Grant {
   id: string;
@@ -9,6 +11,7 @@ export interface Grant {
   eligibility: string;
   applicationLink: string;
   deadline: string;
+  deadlineType?: DeadlineType;
   amount: string;
   currency: string;
   status: 'active' | 'inactive' | 'closed';

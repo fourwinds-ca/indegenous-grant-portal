@@ -2,15 +2,19 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { FaFileAlt, FaChartBar, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { FaFileAlt, FaChartBar, FaSignOutAlt, FaUser, FaSearch, FaBookmark } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import Applications from './Applications';
 import Metrics from './Metrics';
+import GrantsList from './GrantsList';
+import TrackedGrants from './TrackedGrants';
+import { addTrackedGrant } from '@/lib/trackedGrants';
 
-type TabType = 'applications' | 'metrics';
+type TabType = 'tracked' | 'browse' | 'applications' | 'metrics';
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('applications');
+  const [activeTab, setActiveTab] = useState<TabType>('tracked');
+  const [successMessage, setSuccessMessage] = useState('');
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -21,10 +25,30 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleTrackGrant = (grantId: string) => {
+    if (user) {
+      addTrackedGrant(user.id, grantId);
+      setSuccessMessage('Grant added to your tracking list!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      // Switch to tracked tab to show the newly tracked grant
+      setActiveTab('tracked');
+    }
+  };
+
   const tabs = [
     {
+      id: 'tracked' as TabType,
+      label: 'My Tracked Grants',
+      icon: <FaBookmark className="text-lg" />,
+    },
+    {
+      id: 'browse' as TabType,
+      label: 'Browse Grants',
+      icon: <FaSearch className="text-lg" />,
+    },
+    {
       id: 'applications' as TabType,
-      label: 'My Applications',
+      label: 'Applications',
       icon: <FaFileAlt className="text-lg" />,
     },
     {
@@ -99,8 +123,17 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            {successMessage}
+          </div>
+        )}
+
         {/* Tab Content */}
         <div className="animate-fadeIn">
+          {activeTab === 'tracked' && <TrackedGrants />}
+          {activeTab === 'browse' && <GrantsList onTrackApplication={handleTrackGrant} />}
           {activeTab === 'applications' && <Applications />}
           {activeTab === 'metrics' && <Metrics />}
         </div>
