@@ -11,9 +11,22 @@ import {
   FaDollarSign,
   FaBuilding
 } from 'react-icons/fa';
-import { mockApplications } from '@/lib/mockData';
-
 type ApplicationStatus = 'approved' | 'submitted' | 'under_review' | 'in_progress' | 'planning';
+
+interface Application {
+  id: string;
+  grantId: string;
+  grantTitle: string;
+  agency: string;
+  applicationStatus: string;
+  applicationDate: string;
+  submissionDate?: string;
+  responseDate?: string;
+  amountRequested: string;
+  amountApproved?: string;
+  notes?: string;
+  deadline: string;
+}
 
 interface StatusConfig {
   icon: React.ReactNode;
@@ -24,7 +37,8 @@ interface StatusConfig {
 }
 
 const Applications: React.FC = () => {
-  const [applications] = useState(mockApplications);
+  // TODO: Fetch from user_grant_applications table when implemented
+  const [applications] = useState<Application[]>([]);
 
   const statusConfigs: Record<ApplicationStatus, StatusConfig> = {
     approved: {

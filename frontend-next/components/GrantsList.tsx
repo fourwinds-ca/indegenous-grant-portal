@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import GrantCard from './GrantCard';
-import { mockGrants } from '@/lib/mockData';
+import { fetchGrants } from '@/lib/grantsService';
+import { Grant } from '@/lib/types';
 
 type SortOption = 'recent' | 'deadline' | 'amount' | 'title';
 
@@ -11,6 +12,8 @@ interface GrantsListProps {
 }
 
 const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
+  const [grants, setGrants] = useState<Grant[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
@@ -23,18 +26,31 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
     'Economic Development',
   ];
 
+  useEffect(() => {
+    async function loadGrants() {
+      try {
+        const data = await fetchGrants();
+        setGrants(data);
+      } catch (error) {
+        console.error('Error loading grants:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadGrants();
+  }, []);
+
   const handleApply = (grantId: string) => {
     if (onTrackApplication) {
       onTrackApplication(grantId);
     } else {
       console.log('Tracking application for grant:', grantId);
-      // This would typically navigate to an application form or modal
       alert(`Tracking application for grant ID: ${grantId}`);
     }
   };
 
   const filteredAndSortedGrants = useMemo(() => {
-    let filtered = mockGrants.filter((grant) => {
+    let filtered = grants.filter((grant) => {
       // Search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
@@ -46,15 +62,18 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
       const matchesCategory =
         categoryFilter === 'All Categories' || grant.category === categoryFilter;
 
-      return matchesSearch && matchesCategory;
+      // Only show active grants
+      const isActive = grant.status === 'active';
+
+      return matchesSearch && matchesCategory && isActive;
     });
 
     // Sort
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'recent':
-          // Sort by ID (assuming higher ID = more recent)
-          return parseInt(b.id) - parseInt(a.id);
+          // Sort by created date if available, otherwise by ID
+          return (b.createdAt || b.id).localeCompare(a.createdAt || a.id);
 
         case 'deadline':
           // Sort by deadline (soonest first)
@@ -74,7 +93,16 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
     });
 
     return filtered;
-  }, [searchQuery, categoryFilter, sortBy]);
+  }, [grants, searchQuery, categoryFilter, sortBy]);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-12 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+        <p className="text-gray-500">Loading grants...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -131,7 +159,7 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors bg-white"
             >
-              <option value="recent">Recently Updated</option>
+              <option value="recent">Recently Added</option>
               <option value="deadline">Deadline Soonest First</option>
               <option value="amount">Funding Amount Highest First</option>
               <option value="title">Title A-Z</option>
@@ -142,7 +170,7 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
         {/* Results Count */}
         <div className="mt-4 text-sm text-gray-600">
           Showing <span className="font-semibold text-teal-700">{filteredAndSortedGrants.length}</span> of{' '}
-          <span className="font-semibold">{mockGrants.length}</span> grants
+          <span className="font-semibold">{grants.filter(g => g.status === 'active').length}</span> active grants
         </div>
       </div>
 
@@ -156,10 +184,10 @@ const GrantsList: React.FC<GrantsListProps> = ({ onTrackApplication }) => {
       ) : (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-12 text-center">
           <p className="text-gray-500 text-lg">
-            No grants found matching your criteria.
+            {grants.length === 0 ? 'No grants available yet.' : 'No grants found matching your criteria.'}
           </p>
           <p className="text-gray-400 text-sm mt-2">
-            Try adjusting your search or filters.
+            {grants.length === 0 ? 'Check back soon for new opportunities.' : 'Try adjusting your search or filters.'}
           </p>
         </div>
       )}
