@@ -1,21 +1,8 @@
 import { supabase } from './supabase';
 
-// List of admin emails - for now, we'll use a simple check
-// In production, this should be fetched from the admin_users table
-const ADMIN_EMAILS = [
-  'rohit.challa@buildingassets.io',
-  'doug@fourwinds.ca',
-];
-
 export async function isUserAdmin(email: string | undefined): Promise<boolean> {
   if (!email) return false;
 
-  // Check against hardcoded list first (faster)
-  if (ADMIN_EMAILS.includes(email.toLowerCase())) {
-    return true;
-  }
-
-  // Check database for additional admins
   try {
     const { data, error } = await supabase
       .from('admin_users')
@@ -29,8 +16,7 @@ export async function isUserAdmin(email: string | undefined): Promise<boolean> {
 
     return true;
   } catch {
-    // If table doesn't exist or other error, fall back to hardcoded list
-    return ADMIN_EMAILS.includes(email.toLowerCase());
+    return false;
   }
 }
 
@@ -41,11 +27,11 @@ export async function getAdminUsers(): Promise<string[]> {
       .select('email');
 
     if (error || !data) {
-      return ADMIN_EMAILS;
+      return [];
     }
 
     return data.map(u => u.email);
   } catch {
-    return ADMIN_EMAILS;
+    return [];
   }
 }
