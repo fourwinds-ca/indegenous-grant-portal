@@ -772,76 +772,71 @@ const AdminDashboard: React.FC = () => {
           ) : filteredGrants.length === 0 ? (
             <div className="p-8 text-center text-gray-500">No grants found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Grant
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Province
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Deadline
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Grant
+                  </th>
+                  <th className="px-2 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">
+                    Category
+                  </th>
+                  <th className="px-2 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">
+                    Province
+                  </th>
+                  <th className="px-2 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase hidden sm:table-cell">
+                    Status
+                  </th>
+                  <th className="px-2 py-2.5 text-right text-xs font-semibold text-gray-600 uppercase w-20">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredGrants.map((grant) => (
+                  <tr key={grant.id} className="hover:bg-gray-50">
+                    <td className="px-3 py-2">
+                      <div className="font-medium text-gray-900 line-clamp-1" title={grant.title}>
+                        {grant.title}
+                      </div>
+                      <div className="text-xs text-gray-500 line-clamp-1" title={grant.agency}>
+                        {grant.agency}
+                      </div>
+                      <div className="md:hidden text-xs text-gray-400 mt-0.5">
+                        {grant.category} • {grant.province || 'Federal'}
+                      </div>
+                    </td>
+                    <td className="px-2 py-2 text-gray-600 hidden md:table-cell">
+                      <span className="line-clamp-1">{grant.category}</span>
+                    </td>
+                    <td className="px-2 py-2 text-gray-600 hidden lg:table-cell">
+                      {grant.province || 'Federal'}
+                    </td>
+                    <td className="px-2 py-2 hidden sm:table-cell">
+                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(grant.status)}`}>
+                        {grant.status.charAt(0).toUpperCase() + grant.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      <button
+                        onClick={() => openEditModal(grant)}
+                        className="text-teal-600 hover:text-teal-800 p-1.5 hover:bg-teal-50 rounded"
+                        title="Edit"
+                      >
+                        <FaEdit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(grant)}
+                        className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded ml-1"
+                        title="Delete"
+                      >
+                        <FaTrash className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredGrants.map((grant) => (
-                    <tr key={grant.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{grant.title}</div>
-                        <div className="text-sm text-gray-500">{grant.agency}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{grant.category}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{grant.province || 'Federal'}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{formatCurrency(grant.amount)}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{grant.deadline}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(grant.status)}`}>
-                          {grant.status.charAt(0).toUpperCase() + grant.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openEditModal(grant)}
-                          className="text-teal-600 hover:text-teal-900 mr-4"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(grant)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <FaTrash />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </main>
