@@ -8,10 +8,12 @@ import {
   FaTrash,
   FaSearch,
   FaFileImport,
+  FaDownload,
   FaSignOutAlt,
   FaCheckCircle,
   FaTimes,
   FaExclamationTriangle,
+  FaSpinner,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { Grant, PROVINCES, GRANT_CATEGORIES, GRANT_STATUSES } from '@/lib/types';
@@ -20,6 +22,7 @@ import {
   createGrant,
   updateGrant,
   deleteGrant,
+  bulkCreateGrants,
 } from '@/lib/grantsService';
 
 interface GrantFormData {
@@ -79,6 +82,12 @@ const AdminDashboard: React.FC = () => {
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // CSV import state
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvError, setCsvError] = useState('');
+  const [csvPreview, setCsvPreview] = useState<Partial<Grant>[]>([]);
+
   useEffect(() => {
     loadGrants();
   }, []);
@@ -121,6 +130,192 @@ const AdminDashboard: React.FC = () => {
     }
 
     setFilteredGrants(filtered);
+  };
+
+  // CSV Template columns
+  const csvColumns = [
+    'title',
+    'agency',
+    'category',
+    'province',
+    'program',
+    'amount',
+    'deadline',
+    'status',
+    'description',
+    'eligibility',
+    'applicationLink',
+    'sourceUrl',
+    'notes',
+  ];
+
+  // Generate and download CSV template
+  const downloadCsvTemplate = () => {
+    const header = csvColumns.join(',');
+    const exampleRow = [
+      'Example Grant Title',
+      'Natural Resources Canada',
+      'Environment',
+      'Federal',
+      'Clean Energy Program',
+      'Up to $500000',
+      '2025-12-31',
+      'active',
+      'Description of the grant program',
+      'Indigenous communities and organizations',
+      'https://example.com/apply',
+      'https://example.com/info',
+      'Internal notes',
+    ].join(',');
+
+    const csvContent = `${header}\n${exampleRow}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'grants_import_template.csv';
+    link.click();
+  };
+
+  // Parse CSV file
+  const parseCsv = (text: string): Partial<Grant>[] => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const grants: Partial<Grant>[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      // Handle quoted values with commas
+      const values: string[] = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (const char of lines[i]) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+
+      const grant: Partial<Grant> = {
+        currency: 'CAD',
+        isPubliclyAvailable: true,
+        addedBy: user?.email || 'admin',
+      };
+
+      headers.forEach((header, index) => {
+        const value = values[index] || '';
+        switch (header) {
+          case 'title':
+            grant.title = value;
+            break;
+          case 'agency':
+            grant.agency = value;
+            break;
+          case 'category':
+            grant.category = value;
+            break;
+          case 'province':
+            grant.province = value || 'Federal';
+            break;
+          case 'program':
+            grant.program = value;
+            break;
+          case 'amount':
+            grant.amount = value;
+            break;
+          case 'deadline':
+            grant.deadline = value;
+            break;
+          case 'status':
+            grant.status = (value as 'active' | 'inactive' | 'closed') || 'active';
+            break;
+          case 'description':
+            grant.description = value;
+            break;
+          case 'eligibility':
+            grant.eligibility = value;
+            break;
+          case 'applicationlink':
+            grant.applicationLink = value;
+            break;
+          case 'sourceurl':
+            grant.sourceUrl = value;
+            break;
+          case 'notes':
+            grant.notes = value;
+            break;
+        }
+      });
+
+      // Only add if has required fields
+      if (grant.title && grant.agency && grant.category) {
+        grants.push(grant);
+      }
+    }
+
+    return grants;
+  };
+
+  // Handle CSV file selection
+  const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setCsvError('');
+    setCsvPreview([]);
+
+    if (!file) {
+      setCsvFile(null);
+      return;
+    }
+
+    if (!file.name.endsWith('.csv')) {
+      setCsvError('Please select a CSV file');
+      return;
+    }
+
+    setCsvFile(file);
+
+    // Parse and preview
+    const text = await file.text();
+    const parsed = parseCsv(text);
+
+    if (parsed.length === 0) {
+      setCsvError('No valid grants found in CSV. Make sure required fields (title, agency, category) are filled.');
+      return;
+    }
+
+    setCsvPreview(parsed);
+  };
+
+  // Import grants from CSV
+  const handleCsvImport = async () => {
+    if (csvPreview.length === 0) {
+      setCsvError('No grants to import');
+      return;
+    }
+
+    setCsvImporting(true);
+    setCsvError('');
+
+    try {
+      await bulkCreateGrants(csvPreview);
+      setShowImportModal(false);
+      setCsvFile(null);
+      setCsvPreview([]);
+      setSuccessMessage(`Successfully imported ${csvPreview.length} grants!`);
+      setTimeout(() => setSuccessMessage(''), 5000);
+      loadGrants();
+    } catch (error) {
+      setCsvError('Failed to import grants. Please check your data and try again.');
+      console.error('CSV import error:', error);
+    } finally {
+      setCsvImporting(false);
+    }
   };
 
   const handleAddGrant = async (e: React.FormEvent) => {
@@ -709,42 +904,140 @@ const AdminDashboard: React.FC = () => {
 
       {/* Import CSV Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Import Grants from CSV</h2>
-            <p className="text-gray-600 mb-4">
-              Upload a CSV file with the following columns:
-            </p>
-            <div className="bg-gray-50 p-4 rounded-md mb-4 text-sm font-mono">
-              title, agency, category, province, program, amount, deadline, description, eligibility, applicationLink, sourceUrl
-            </div>
-            <input
-              type="file"
-              accept=".csv"
-              className="w-full mb-4"
-              onChange={(e) => {
-                // TODO: Implement CSV import
-                console.log('File selected:', e.target.files?.[0]);
-              }}
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowImportModal(false)}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  // TODO: Process CSV import
-                  setShowImportModal(false);
-                  setSuccessMessage('CSV import feature coming soon!');
-                  setTimeout(() => setSuccessMessage(''), 5000);
-                }}
-                className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
-              >
-                Import
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <div className="min-h-full flex items-start justify-center p-4 py-8">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Import Grants from CSV</h2>
+
+              {/* Template Download */}
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-teal-800">Download CSV Template</h3>
+                    <p className="text-sm text-teal-600 mt-1">
+                      Get a pre-formatted template with the correct column headers and an example row.
+                    </p>
+                  </div>
+                  <button
+                    onClick={downloadCsvTemplate}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+                  >
+                    <FaDownload />
+                    Download Template
+                  </button>
+                </div>
+              </div>
+
+              {/* Required Fields Notice */}
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Required columns:</strong> title, agency, category
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Optional columns:</strong> province, program, amount, deadline, status, description, eligibility, applicationLink, sourceUrl, notes
+                </p>
+              </div>
+
+              {/* File Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvFileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+
+              {/* Error Message */}
+              {csvError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm mb-4">
+                  {csvError}
+                </div>
+              )}
+
+              {/* Preview */}
+              {csvPreview.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    Preview ({csvPreview.length} grants to import)
+                  </h3>
+                  <div className="border border-gray-200 rounded-lg overflow-x-auto max-h-64 overflow-y-auto">
+                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">#</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">Title</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">Agency</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">Category</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">Province</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {csvPreview.slice(0, 10).map((grant, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 text-gray-500">{index + 1}</td>
+                            <td className="px-4 py-2 text-gray-900 max-w-xs truncate">{grant.title}</td>
+                            <td className="px-4 py-2 text-gray-600 max-w-xs truncate">{grant.agency}</td>
+                            <td className="px-4 py-2 text-gray-600">{grant.category}</td>
+                            <td className="px-4 py-2 text-gray-600">{grant.province || 'Federal'}</td>
+                            <td className="px-4 py-2">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                grant.status === 'active' ? 'bg-green-100 text-green-800' :
+                                grant.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {grant.status || 'active'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {csvPreview.length > 10 && (
+                      <div className="px-4 py-2 bg-gray-50 text-sm text-gray-500 text-center">
+                        ... and {csvPreview.length - 10} more grants
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setCsvFile(null);
+                    setCsvPreview([]);
+                    setCsvError('');
+                  }}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                  disabled={csvImporting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCsvImport}
+                  disabled={csvPreview.length === 0 || csvImporting}
+                  className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {csvImporting ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <FaFileImport />
+                      Import {csvPreview.length > 0 ? `${csvPreview.length} Grants` : 'Grants'}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
