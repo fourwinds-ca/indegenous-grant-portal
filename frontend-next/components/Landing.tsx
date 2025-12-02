@@ -11,6 +11,10 @@ import {
   FaCalendarAlt,
   FaArrowRight,
   FaTimes,
+  FaExternalLinkAlt,
+  FaHandshake,
+  FaLeaf,
+  FaHeart,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import GrantsList from './GrantsList';
@@ -297,6 +301,73 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
+      {/* About Us Section */}
+      <section id="about" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                About Four Winds
+              </h3>
+              <p className="text-lg text-gray-600 mb-6">
+                Green Buffalo is proudly developed by <strong>Four Winds</strong>, an Indigenous-led organization
+                dedicated to empowering First Nations, Métis, and Inuit communities across Canada through
+                technology, sustainable development, and economic opportunities.
+              </p>
+              <p className="text-lg text-gray-600 mb-8">
+                Our mission is to bridge the gap between Indigenous communities and the funding resources
+                they need to thrive. We believe in building tools that respect traditional values while
+                embracing modern solutions for community development.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div className="flex flex-col items-center text-center p-4 bg-teal-50 rounded-lg">
+                  <FaHandshake className="text-3xl text-teal-600 mb-2" />
+                  <span className="text-sm font-semibold text-gray-700">Community Partnerships</span>
+                </div>
+                <div className="flex flex-col items-center text-center p-4 bg-teal-50 rounded-lg">
+                  <FaLeaf className="text-3xl text-teal-600 mb-2" />
+                  <span className="text-sm font-semibold text-gray-700">Sustainable Growth</span>
+                </div>
+                <div className="flex flex-col items-center text-center p-4 bg-teal-50 rounded-lg">
+                  <FaHeart className="text-3xl text-teal-600 mb-2" />
+                  <span className="text-sm font-semibold text-gray-700">Indigenous Values</span>
+                </div>
+              </div>
+
+              <a
+                href="https://fourwinds.ca/about"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 transition-colors"
+              >
+                Learn More About Four Winds
+                <FaExternalLinkAlt className="text-sm" />
+              </a>
+            </div>
+
+            <div className="relative">
+              <div className="bg-gradient-to-br from-teal-100 to-emerald-100 rounded-2xl p-8 lg:p-12">
+                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                  <h4 className="font-bold text-gray-900 mb-2">Our Commitment</h4>
+                  <p className="text-gray-600 text-sm">
+                    We are committed to providing transparent, accessible, and culturally respectful
+                    services that honor the sovereignty and self-determination of Indigenous peoples.
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h4 className="font-bold text-gray-900 mb-2">Built by Indigenous, for Indigenous</h4>
+                  <p className="text-gray-600 text-sm">
+                    Every feature of Green Buffalo is designed with input from Indigenous community
+                    members to ensure it meets real needs and respects cultural protocols.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -334,31 +405,66 @@ const Landing: React.FC = () => {
                 />
                 <h3 className="text-white font-bold text-lg">Green Buffalo</h3>
               </div>
-              <p className="text-sm">
+              <p className="text-sm mb-4">
                 Empowering Indigenous communities through accessible funding opportunities
+              </p>
+              <p className="text-xs text-gray-400">
+                A product of{' '}
+                <a
+                  href="https://fourwinds.ca"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-400 hover:text-teal-300"
+                >
+                  Four Winds
+                </a>
               </p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
-                    About Us
+                  <a
+                    href="https://fourwinds.ca/about"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  >
+                    About Four Winds
+                    <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
-                    Contact
+                  <a
+                    href="https://fourwinds.ca/contact"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  >
+                    Contact Us
+                    <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
+                  <a
+                    href="https://fourwinds.ca/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  >
                     Privacy Policy
+                    <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
+                  <a
+                    href="https://fourwinds.ca/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  >
                     Terms of Service
+                    <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
               </ul>
@@ -367,28 +473,50 @@ const Landing: React.FC = () => {
               <h4 className="text-white font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
-                    Help Center
+                  <a href="#about" className="hover:text-teal-400 transition-colors">
+                    About Green Buffalo
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
-                    FAQs
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-teal-400 transition-colors">
+                  <a
+                    href="https://fourwinds.ca/resources"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  >
                     Resources
+                    <FaExternalLinkAlt className="text-xs" />
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://fourwinds.ca/contact"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  >
+                    Get Help
+                    <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 pt-8 flex justify-between items-center text-sm">
-            <p>&copy; 2024 Green Buffalo Indigenous Grant Portal. All rights reserved.</p>
-            <a href="/admin" className="text-gray-500 hover:text-gray-400 transition-colors">
-              Admin
-            </a>
+          <div className="border-t border-gray-700 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+            <p>&copy; {new Date().getFullYear()} Green Buffalo Indigenous Grant Portal. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://fourwinds.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-teal-400 transition-colors"
+              >
+                fourwinds.ca
+              </a>
+              <a href="/admin" className="text-gray-500 hover:text-gray-400 transition-colors">
+                Admin
+              </a>
+            </div>
           </div>
         </div>
       </footer>
