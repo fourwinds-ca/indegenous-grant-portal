@@ -3,9 +3,7 @@ import { supabase } from './supabase';
 // List of admin emails - for now, we'll use a simple check
 // In production, this should be fetched from the admin_users table
 const ADMIN_EMAILS = [
-  'doug@greenbuffalo.ca',
-  'dan@greenbuffalo.ca',
-  'rohit@buildingassets.ai', // For development
+  'rohit.challa@buildingassets.io',
 ];
 
 export async function isUserAdmin(email: string | undefined): Promise<boolean> {
