@@ -384,8 +384,11 @@ const Landing: React.FC = () => {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 pt-8 text-center text-sm">
+          <div className="border-t border-gray-700 pt-8 flex justify-between items-center text-sm">
             <p>&copy; 2024 Green Buffalo Indigenous Grant Portal. All rights reserved.</p>
+            <a href="/admin" className="text-gray-500 hover:text-gray-400 transition-colors">
+              Admin
+            </a>
           </div>
         </div>
       </footer>
