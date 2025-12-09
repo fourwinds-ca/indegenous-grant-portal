@@ -46,26 +46,26 @@ function contactFromDB(db: ContactSubmissionDB): ContactSubmission {
   };
 }
 
-// Submit a new contact form (public)
-export async function submitContactForm(formData: ContactFormData): Promise<ContactSubmission> {
-  const { data, error } = await supabase
-    .from('contact_submissions')
-    .insert([{
-      name: formData.name,
-      email: formData.email,
-      subject: formData.subject || null,
-      message: formData.message,
-      status: 'new',
-    }])
-    .select()
-    .single();
+// Submit a new contact form (public) - uses RPC to bypass RLS
+export async function submitContactForm(formData: ContactFormData): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('submit_contact_form', {
+    p_name: formData.name,
+    p_email: formData.email,
+    p_subject: formData.subject || null,
+    p_message: formData.message,
+  });
 
   if (error) {
     console.error('Error submitting contact form:', error);
     throw new Error('Failed to submit contact form. Please try again.');
   }
 
-  return contactFromDB(data as ContactSubmissionDB);
+  const result = data as { success: boolean; message: string };
+  if (!result.success) {
+    throw new Error(result.message);
+  }
+
+  return result;
 }
 
 // Fetch all contact submissions (admin only)

@@ -15,11 +15,13 @@ import {
   FaHandshake,
   FaLeaf,
   FaHeart,
+  FaEnvelope,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import GrantsList from './GrantsList';
 import { addTrackedGrant } from '@/lib/trackedGrants';
 import ContactForm from './ContactForm';
+import { subscribe } from '@/lib/subscriptionService';
 
 const Landing: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -31,6 +33,12 @@ const Landing: React.FC = () => {
   const [pendingGrantId, setPendingGrantId] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Subscription form state
+  const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [subscribeName, setSubscribeName] = useState('');
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const { signInWithEmail, signUpWithEmail, user } = useAuth();
 
@@ -80,6 +88,28 @@ const Landing: React.FC = () => {
       setAuthMode('signup');
       setAuthMessage('Please sign in to track this grant application');
       setShowAuthModal(true);
+    }
+  };
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubscribeLoading(true);
+    setSubscribeMessage(null);
+
+    try {
+      const result = await subscribe(subscribeEmail, subscribeName || undefined);
+      if (result.success) {
+        setSubscribeMessage({ type: 'success', text: result.message });
+        setSubscribeEmail('');
+        setSubscribeName('');
+      } else {
+        setSubscribeMessage({ type: 'error', text: result.message });
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred. Please try again.';
+      setSubscribeMessage({ type: 'error', text: errorMessage });
+    } finally {
+      setSubscribeLoading(false);
     }
   };
 
@@ -412,6 +442,99 @@ const Landing: React.FC = () => {
               </div>
             </div>
             <ContactForm />
+          </div>
+        </div>
+      </section>
+
+      {/* Subscribe Section */}
+      <section id="subscribe" className="py-20 bg-teal-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-100 rounded-full mb-4">
+                <FaEnvelope className="text-3xl text-teal-600" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                Subscribe to Reminders & Updates
+              </h3>
+              <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                Stay informed about new grant opportunities, upcoming deadlines, and important updates
+                for Indigenous communities across Canada.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubscribe} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="subscribe-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name (Optional)
+                  </label>
+                  <input
+                    id="subscribe-name"
+                    type="text"
+                    value={subscribeName}
+                    onChange={(e) => setSubscribeName(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors"
+                    placeholder="Your name"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="subscribe-email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="subscribe-email"
+                    type="email"
+                    value={subscribeEmail}
+                    onChange={(e) => setSubscribeEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              {subscribeMessage && (
+                <div
+                  className={`p-4 rounded-lg ${
+                    subscribeMessage.type === 'success'
+                      ? 'bg-green-50 border border-green-200 text-green-700'
+                      : 'bg-red-50 border border-red-200 text-red-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {subscribeMessage.type === 'success' ? (
+                      <FaCheckCircle className="text-green-600" />
+                    ) : (
+                      <FaTimes className="text-red-600" />
+                    )}
+                    <span>{subscribeMessage.text}</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={subscribeLoading}
+                className="w-full bg-teal-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {subscribeLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Subscribing...
+                  </>
+                ) : (
+                  <>
+                    <FaBell />
+                    Subscribe to Updates
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-sm text-gray-500">
+                We respect your privacy. Unsubscribe at any time with one click.
+              </p>
+            </form>
           </div>
         </div>
       </section>

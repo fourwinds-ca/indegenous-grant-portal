@@ -20,6 +20,10 @@ import {
   FaEye,
   FaReply,
   FaArchive,
+  FaBell,
+  FaToggleOn,
+  FaToggleOff,
+  FaPaperPlane,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import AIResearchPanel from './AIResearchPanel';
@@ -37,6 +41,13 @@ import {
   updateContactStatus,
   deleteContactSubmission,
 } from '@/lib/contactService';
+import {
+  EmailSubscription,
+  fetchSubscriptions,
+  deleteSubscription,
+  toggleSubscriptionStatus,
+  getSubscriptionStats,
+} from '@/lib/subscriptionService';
 
 interface GrantFormData {
   title: string;
@@ -84,7 +95,15 @@ const AdminDashboard: React.FC = () => {
   const [provinceFilter, setProvinceFilter] = useState('All');
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research' | 'contacts'>('grants');
+  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research' | 'contacts' | 'subscriptions'>('grants');
+
+  // Subscriptions state
+  const [subscriptions, setSubscriptions] = useState<EmailSubscription[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const [selectedSubscription, setSelectedSubscription] = useState<EmailSubscription | null>(null);
+  const [showDeleteSubscriptionModal, setShowDeleteSubscriptionModal] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
 
   // Contact submissions state
   const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
@@ -114,7 +133,75 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     loadGrants();
     loadContactSubmissions();
+    loadSubscriptions();
   }, []);
+
+  const loadSubscriptions = async () => {
+    try {
+      setSubscriptionsLoading(true);
+      const [subs, stats] = await Promise.all([
+        fetchSubscriptions(),
+        getSubscriptionStats(),
+      ]);
+      setSubscriptions(subs);
+      setSubscriptionStats(stats);
+    } catch (error) {
+      console.error('Error loading subscriptions:', error);
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  };
+
+  const handleToggleSubscription = async (id: string, currentStatus: boolean) => {
+    try {
+      await toggleSubscriptionStatus(id, !currentStatus);
+      setSuccessMessage(`Subscription ${!currentStatus ? 'activated' : 'deactivated'}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      loadSubscriptions();
+    } catch (error) {
+      console.error('Error toggling subscription:', error);
+    }
+  };
+
+  const handleDeleteSubscription = async () => {
+    if (!selectedSubscription) return;
+    try {
+      await deleteSubscription(selectedSubscription.id);
+      setShowDeleteSubscriptionModal(false);
+      setSelectedSubscription(null);
+      setSuccessMessage('Subscription deleted');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      loadSubscriptions();
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+    }
+  };
+
+  const handleSendReminders = async (type: 'deadline_reminders' | 'new_grants') => {
+    setSendingReminders(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-reminders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ type }),
+      });
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      setSuccessMessage(`Sent ${data.emailsSent} reminder emails`);
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      setSuccessMessage('Failed to send reminders. Check console for details.');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } finally {
+      setSendingReminders(false);
+    }
+  };
 
   useEffect(() => {
     filterGrants();
@@ -805,6 +892,20 @@ const AdminDashboard: React.FC = () => {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('subscriptions')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+              activeTab === 'subscriptions'
+                ? 'bg-white text-teal-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <FaBell />
+            Subscriptions
+            <span className="bg-teal-100 text-teal-700 text-xs rounded-full px-2 py-0.5">
+              {subscriptionStats.active}
+            </span>
+          </button>
         </div>
 
         {/* AI Research Tab */}
@@ -910,6 +1011,133 @@ const AdminDashboard: React.FC = () => {
                             onClick={() => {
                               setSelectedContact(contact);
                               setShowDeleteContactModal(true);
+                            }}
+                            className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded ml-1"
+                            title="Delete"
+                          >
+                            <FaTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Subscriptions Tab */}
+        {activeTab === 'subscriptions' && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-teal-600">{subscriptionStats.total}</p>
+                <p className="text-gray-600">Total Subscribers</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-green-600">{subscriptionStats.active}</p>
+                <p className="text-gray-600">Active</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-gray-400">{subscriptionStats.inactive}</p>
+                <p className="text-gray-600">Inactive</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md flex flex-col justify-center">
+                <p className="text-sm text-gray-500 mb-2">Send Reminders</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSendReminders('deadline_reminders')}
+                    disabled={sendingReminders}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {sendingReminders ? <FaSpinner className="animate-spin" /> : <FaPaperPlane />}
+                    Deadlines
+                  </button>
+                  <button
+                    onClick={() => handleSendReminders('new_grants')}
+                    disabled={sendingReminders}
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {sendingReminders ? <FaSpinner className="animate-spin" /> : <FaPaperPlane />}
+                    New Grants
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Subscriptions Table */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">Email Subscribers</h2>
+                <p className="text-sm text-gray-500">Manage email subscriptions for grant reminders and updates</p>
+              </div>
+              {subscriptionsLoading ? (
+                <div className="p-8 text-center text-gray-500">Loading subscriptions...</div>
+              ) : subscriptions.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No subscribers yet</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Subscriber
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">
+                        Type
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">
+                        Subscribed
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase w-32">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {subscriptions.map((sub) => (
+                      <tr key={sub.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900">{sub.name || 'Anonymous'}</div>
+                          <div className="text-xs text-gray-500">{sub.email}</div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
+                          <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            {sub.subscriptionType === 'all' ? 'All Updates' :
+                             sub.subscriptionType === 'deadline_reminders' ? 'Deadlines' :
+                             sub.subscriptionType === 'new_grants' ? 'New Grants' : sub.subscriptionType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">
+                          {formatDate(sub.subscribedAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                            sub.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {sub.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handleToggleSubscription(sub.id, sub.isActive)}
+                            className={`p-1.5 rounded ${
+                              sub.isActive
+                                ? 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                            title={sub.isActive ? 'Deactivate' : 'Activate'}
+                          >
+                            {sub.isActive ? <FaToggleOn className="w-4 h-4" /> : <FaToggleOff className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubscription(sub);
+                              setShowDeleteSubscriptionModal(true);
                             }}
                             className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded ml-1"
                             title="Delete"
@@ -1436,6 +1664,38 @@ const AdminDashboard: React.FC = () => {
               </button>
               <button
                 onClick={handleDeleteContact}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Subscription Confirmation Modal */}
+      {showDeleteSubscriptionModal && selectedSubscription && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <FaExclamationTriangle className="text-2xl" />
+              <h2 className="text-xl font-bold">Delete Subscription</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete the subscription for <strong>{selectedSubscription.email}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteSubscriptionModal(false);
+                  setSelectedSubscription(null);
+                }}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSubscription}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
                 Delete
