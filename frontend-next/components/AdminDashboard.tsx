@@ -14,8 +14,11 @@ import {
   FaTimes,
   FaExclamationTriangle,
   FaSpinner,
+  FaRobot,
+  FaTable,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
+import AIResearchPanel from './AIResearchPanel';
 import { Grant, PROVINCES, GRANT_CATEGORIES, GRANT_STATUSES } from '@/lib/types';
 import {
   fetchGrants,
@@ -69,6 +72,9 @@ const AdminDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [provinceFilter, setProvinceFilter] = useState('All');
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research'>('grants');
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -675,6 +681,43 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tab Navigation */}
+        <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+          <button
+            onClick={() => setActiveTab('grants')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+              activeTab === 'grants'
+                ? 'bg-white text-teal-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <FaTable />
+            Grants Database
+          </button>
+          <button
+            onClick={() => setActiveTab('ai-research')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+              activeTab === 'ai-research'
+                ? 'bg-white text-purple-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <FaRobot />
+            AI Research
+          </button>
+        </div>
+
+        {/* AI Research Tab */}
+        {activeTab === 'ai-research' && (
+          <AIResearchPanel
+            adminEmail={user?.email || 'admin'}
+            onChangeApplied={loadGrants}
+          />
+        )}
+
+        {/* Grants Tab */}
+        {activeTab === 'grants' && (
+          <>
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-md">
@@ -839,6 +882,8 @@ const AdminDashboard: React.FC = () => {
             </table>
           )}
         </div>
+          </>
+        )}
       </main>
 
       {/* Add Grant Modal */}
