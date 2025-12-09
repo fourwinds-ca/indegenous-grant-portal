@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import GrantsList from './GrantsList';
 import { addTrackedGrant } from '@/lib/trackedGrants';
+import ContactForm from './ContactForm';
 
 const Landing: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -307,7 +308,7 @@ const Landing: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                About Four Winds
+                About FourWinds
               </h3>
               <p className="text-lg text-gray-600 mb-6">
                 Green Buffalo is proudly developed by <strong>Four Winds</strong>, an Indigenous-led organization
@@ -336,7 +337,7 @@ const Landing: React.FC = () => {
               </div>
 
               <a
-                href="https://fourwinds.ca/about"
+                href="https://fourwinds.ca"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 transition-colors"
@@ -364,6 +365,53 @@ const Landing: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Us Section */}
+      <section id="contact" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div>
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                Contact Us
+              </h3>
+              <p className="text-lg text-gray-600 mb-6">
+                Have questions about finding the right grants for your community? Need help navigating
+                the application process? Our team is here to support you every step of the way.
+              </p>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaUsers className="text-teal-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Community Support</h4>
+                    <p className="text-gray-600 text-sm">Get personalized guidance for your community&apos;s unique funding needs</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaSearch className="text-teal-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Grant Research</h4>
+                    <p className="text-gray-600 text-sm">We can help identify grants that match your project goals</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaHandshake className="text-teal-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Partnership Inquiries</h4>
+                    <p className="text-gray-600 text-sm">Interested in collaborating? Let&apos;s discuss how we can work together</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <ContactForm />
           </div>
         </div>
       </section>
@@ -425,29 +473,26 @@ const Landing: React.FC = () => {
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
-                    href="https://fourwinds.ca/about"
+                    href="https://fourwinds.ca"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
                   >
-                    About Four Winds
+                    About FourWinds
                     <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://fourwinds.ca/contact"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                    href="#contact"
+                    className="hover:text-teal-400 transition-colors"
                   >
                     Contact Us
-                    <FaExternalLinkAlt className="text-xs" />
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://fourwinds.ca/privacy"
+                    href="https://fourwinds.ca"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
@@ -458,7 +503,7 @@ const Landing: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href="https://fourwinds.ca/terms"
+                    href="https://fourwinds.ca"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
@@ -479,7 +524,7 @@ const Landing: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href="https://fourwinds.ca/resources"
+                    href="https://fourwinds.ca"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
@@ -490,7 +535,7 @@ const Landing: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href="https://fourwinds.ca/contact"
+                    href="https://fourwinds.ca"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"

@@ -16,6 +16,10 @@ import {
   FaSpinner,
   FaRobot,
   FaTable,
+  FaEnvelope,
+  FaEye,
+  FaReply,
+  FaArchive,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import AIResearchPanel from './AIResearchPanel';
@@ -27,6 +31,12 @@ import {
   deleteGrant,
   bulkCreateGrants,
 } from '@/lib/grantsService';
+import {
+  ContactSubmission,
+  fetchContactSubmissions,
+  updateContactStatus,
+  deleteContactSubmission,
+} from '@/lib/contactService';
 
 interface GrantFormData {
   title: string;
