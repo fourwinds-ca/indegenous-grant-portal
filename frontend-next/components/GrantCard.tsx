@@ -282,8 +282,8 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
             <Image
               src="/greenbuffalo_logo.png"
               alt="Four Winds"
-              width={20}
-              height={20}
+              width={40}
+              height={40}
               className="object-contain"
             />
             <span>Request Support</span>

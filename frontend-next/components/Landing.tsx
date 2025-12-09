@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   FaSearch,
   FaChartLine,
@@ -16,6 +17,11 @@ import {
   FaLeaf,
   FaHeart,
   FaEnvelope,
+  FaShieldAlt,
+  FaPencilAlt,
+  FaProjectDiagram,
+  FaDatabase,
+  FaSync,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import GrantsList from './GrantsList';
@@ -200,7 +206,13 @@ const Landing: React.FC = () => {
                 Green Buffalo Indigenous Grant Portal
               </h1>
             </div>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/about"
+                className="px-4 py-2 text-gray-600 font-medium hover:text-teal-700 hover:bg-teal-50 rounded-md transition-colors hidden sm:block"
+              >
+                About
+              </Link>
               <button
                 onClick={() => {
                   setAuthMode('signin');
@@ -338,17 +350,18 @@ const Landing: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                About FourWinds
+                About Four Winds
               </h3>
               <p className="text-lg text-gray-600 mb-6">
-                Green Buffalo is proudly developed by <strong>Four Winds</strong>, an Indigenous-led organization
-                dedicated to empowering First Nations, Métis, and Inuit communities across Canada through
+                Green Buffalo is proudly developed by <strong>Four Winds & Associates</strong>, an Indigenous-led organization
+                dedicated to empowering First Nations, Metis, and Inuit communities across Canada through
                 technology, sustainable development, and economic opportunities.
               </p>
               <p className="text-lg text-gray-600 mb-8">
                 Our mission is to bridge the gap between Indigenous communities and the funding resources
-                they need to thrive. We believe in building tools that respect traditional values while
-                embracing modern solutions for community development.
+                they need to thrive. We are committed to Indigenous data sovereignty, adhering to OCAP
+                principles, and offering comprehensive support services including grant writing, project
+                planning, and development assistance.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
@@ -366,15 +379,24 @@ const Landing: React.FC = () => {
                 </div>
               </div>
 
-              <a
-                href="https://fourwinds.ca"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 transition-colors"
-              >
-                Learn More About Four Winds
-                <FaExternalLinkAlt className="text-sm" />
-              </a>
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/about"
+                  className="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 transition-colors"
+                >
+                  Learn More About Us
+                  <FaArrowRight className="text-sm" />
+                </Link>
+                <a
+                  href="https://fourwinds.ca"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 border-2 border-teal-600 text-teal-700 px-6 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"
+                >
+                  Visit Four Winds
+                  <FaExternalLinkAlt className="text-sm" />
+                </a>
+              </div>
             </div>
 
             <div className="relative">
@@ -384,6 +406,13 @@ const Landing: React.FC = () => {
                   <p className="text-gray-600 text-sm">
                     We are committed to providing transparent, accessible, and culturally respectful
                     services that honor the sovereignty and self-determination of Indigenous peoples.
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                  <h4 className="font-bold text-gray-900 mb-2">OCAP Principles</h4>
+                  <p className="text-gray-600 text-sm">
+                    We uphold Indigenous data sovereignty through Ownership, Control, Access, and
+                    Possession principles in all our data handling practices.
                   </p>
                 </div>
                 <div className="bg-white rounded-xl shadow-lg p-6">
@@ -595,15 +624,12 @@ const Landing: React.FC = () => {
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a
-                    href="https://fourwinds.ca"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-teal-400 transition-colors inline-flex items-center gap-1"
+                  <Link
+                    href="/about"
+                    className="hover:text-teal-400 transition-colors"
                   >
-                    About FourWinds
-                    <FaExternalLinkAlt className="text-xs" />
-                  </a>
+                    About Four Winds
+                  </Link>
                 </li>
                 <li>
                   <a
@@ -641,9 +667,9 @@ const Landing: React.FC = () => {
               <h4 className="text-white font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#about" className="hover:text-teal-400 transition-colors">
+                  <Link href="/about" className="hover:text-teal-400 transition-colors">
                     About Green Buffalo
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a
