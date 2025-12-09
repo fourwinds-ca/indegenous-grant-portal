@@ -1,7 +1,23 @@
 "use client";
 
-import React from 'react';
-import { FaDollarSign, FaCalendarAlt, FaBuilding, FaExternalLinkAlt, FaBookmark, FaCheck } from 'react-icons/fa';
+import React, { useState } from 'react';
+import Image from 'next/image';
+import {
+  FaDollarSign,
+  FaCalendarAlt,
+  FaBuilding,
+  FaExternalLinkAlt,
+  FaBookmark,
+  FaCheck,
+  FaShareAlt,
+  FaEnvelope,
+  FaTwitter,
+  FaFacebook,
+  FaLinkedin,
+  FaWhatsapp,
+  FaTimes,
+  FaHandsHelping,
+} from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { isGrantTracked } from '@/lib/trackedGrants';
 
@@ -32,6 +48,74 @@ const categoryColors: Record<string, string> = {
 const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
   const { user } = useAuth();
   const tracked = user ? isGrantTracked(user.id, grant.id) : false;
+  const [showShareMenu, setShowShareMenu] = useState(false);
+
+  const portalUrl = typeof window !== 'undefined' ? window.location.origin : 'https://greenbuffalo.ca';
+
+  const getShareText = () => {
+    return `Check out this Indigenous grant opportunity: ${grant.title} - Up to ${formatCurrency(grant.amount)} from ${grant.agency}. Apply before ${formatDate(grant.deadline)}!`;
+  };
+
+  const getShareUrl = () => {
+    return `${portalUrl}?grant=${grant.id}`;
+  };
+
+  const shareOptions = [
+    {
+      name: 'Email',
+      icon: FaEnvelope,
+      color: 'text-gray-600 hover:text-gray-800',
+      onClick: () => {
+        const subject = encodeURIComponent(`Indigenous Grant Opportunity: ${grant.title}`);
+        const body = encodeURIComponent(`${getShareText()}\n\nLearn more at: ${getShareUrl()}`);
+        window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+        setShowShareMenu(false);
+      },
+    },
+    {
+      name: 'Twitter',
+      icon: FaTwitter,
+      color: 'text-sky-500 hover:text-sky-600',
+      onClick: () => {
+        const text = encodeURIComponent(getShareText());
+        const url = encodeURIComponent(getShareUrl());
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+        setShowShareMenu(false);
+      },
+    },
+    {
+      name: 'Facebook',
+      icon: FaFacebook,
+      color: 'text-blue-600 hover:text-blue-700',
+      onClick: () => {
+        const url = encodeURIComponent(getShareUrl());
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+        setShowShareMenu(false);
+      },
+    },
+    {
+      name: 'LinkedIn',
+      icon: FaLinkedin,
+      color: 'text-blue-700 hover:text-blue-800',
+      onClick: () => {
+        const url = encodeURIComponent(getShareUrl());
+        const title = encodeURIComponent(grant.title);
+        const summary = encodeURIComponent(getShareText());
+        window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`, '_blank');
+        setShowShareMenu(false);
+      },
+    },
+    {
+      name: 'WhatsApp',
+      icon: FaWhatsapp,
+      color: 'text-green-500 hover:text-green-600',
+      onClick: () => {
+        const text = encodeURIComponent(`${getShareText()}\n\n${getShareUrl()}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+        setShowShareMenu(false);
+      },
+    },
+  ];
 
   const formatCurrency = (amount: string): string => {
     const numAmount = parseFloat(amount);
@@ -59,10 +143,10 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative">
       <div className="p-6 flex-1 flex flex-col">
-        {/* Category Badge */}
-        <div className="mb-3">
+        {/* Header with Category Badge and Share Button */}
+        <div className="flex items-start justify-between mb-3">
           <span
             className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${
               categoryColors[grant.category] || 'bg-gray-100 text-gray-800 border-gray-300'
@@ -70,6 +154,42 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
           >
             {grant.category}
           </span>
+
+          {/* Share Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowShareMenu(!showShareMenu)}
+              className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
+              title="Share this grant"
+            >
+              <FaShareAlt className="w-4 h-4" />
+            </button>
+
+            {/* Share Dropdown Menu */}
+            {showShareMenu && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[160px]">
+                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-500 uppercase">Share via</span>
+                  <button
+                    onClick={() => setShowShareMenu(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <FaTimes className="w-3 h-3" />
+                  </button>
+                </div>
+                {shareOptions.map((option) => (
+                  <button
+                    key={option.name}
+                    onClick={option.onClick}
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${option.color}`}
+                  >
+                    <option.icon className="w-4 h-4" />
+                    {option.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Title */}
@@ -121,35 +241,64 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-auto">
-          {tracked ? (
-            <button
-              disabled
-              className="flex-1 flex items-center justify-center gap-2 bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-md cursor-default text-sm border border-green-300"
+        <div className="space-y-3 mt-auto">
+          {/* Primary Actions Row */}
+          <div className="flex gap-3">
+            {tracked ? (
+              <button
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-md cursor-default text-sm border border-green-300"
+              >
+                <FaCheck />
+                Tracked
+              </button>
+            ) : (
+              <button
+                onClick={handleApply}
+                className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 text-sm"
+              >
+                <FaBookmark />
+                Track Grant
+              </button>
+            )}
+            <a
+              href={grant.applicationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-teal-600 font-semibold py-2 px-4 rounded-md border-2 border-teal-600 transition-colors duration-200 text-sm"
             >
-              <FaCheck />
-              Tracked
-            </button>
-          ) : (
-            <button
-              onClick={handleApply}
-              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 text-sm"
-            >
-              <FaBookmark />
-              Track Grant
-            </button>
-          )}
+              Apply
+              <FaExternalLinkAlt className="text-xs" />
+            </a>
+          </div>
+
+          {/* Request Support Button */}
           <a
-            href={grant.applicationLink}
+            href={`https://fourwinds.ca/contact?grant=${encodeURIComponent(grant.title)}&ref=greenbuffalo`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-teal-600 font-semibold py-2 px-4 rounded-md border-2 border-teal-600 transition-colors duration-200 text-sm"
+            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-800 font-medium py-2.5 px-4 rounded-md border border-amber-200 transition-all duration-200 text-sm group"
           >
-            Apply
-            <FaExternalLinkAlt className="text-xs" />
+            <Image
+              src="/greenbuffalo_logo.png"
+              alt="Four Winds"
+              width={20}
+              height={20}
+              className="object-contain"
+            />
+            <span>Request Support</span>
+            <FaHandsHelping className="text-amber-600 group-hover:scale-110 transition-transform" />
           </a>
         </div>
       </div>
+
+      {/* Click outside to close share menu */}
+      {showShareMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowShareMenu(false)}
+        />
+      )}
     </div>
   );
 };
