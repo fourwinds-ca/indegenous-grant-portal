@@ -84,7 +84,14 @@ const AdminDashboard: React.FC = () => {
   const [provinceFilter, setProvinceFilter] = useState('All');
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research'>('grants');
+  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research' | 'contacts'>('grants');
+
+  // Contact submissions state
+  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<ContactSubmission | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showDeleteContactModal, setShowDeleteContactModal] = useState(false);
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -106,11 +113,78 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     loadGrants();
+    loadContactSubmissions();
   }, []);
 
   useEffect(() => {
     filterGrants();
   }, [grants, searchTerm, categoryFilter, provinceFilter]);
+
+  const loadContactSubmissions = async () => {
+    try {
+      setContactsLoading(true);
+      const data = await fetchContactSubmissions();
+      setContactSubmissions(data);
+    } catch (error) {
+      console.error('Error loading contact submissions:', error);
+    } finally {
+      setContactsLoading(false);
+    }
+  };
+
+  const handleUpdateContactStatus = async (id: string, status: ContactSubmission['status']) => {
+    try {
+      await updateContactStatus(id, status);
+      setSuccessMessage(`Contact marked as ${status}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      loadContactSubmissions();
+      if (showContactModal) {
+        setShowContactModal(false);
+        setSelectedContact(null);
+      }
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+    }
+  };
+
+  const handleDeleteContact = async () => {
+    if (!selectedContact) return;
+    try {
+      await deleteContactSubmission(selectedContact.id);
+      setShowDeleteContactModal(false);
+      setSelectedContact(null);
+      setSuccessMessage('Contact submission deleted');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      loadContactSubmissions();
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+    }
+  };
+
+  const getContactStatusColor = (status: string) => {
+    switch (status) {
+      case 'new':
+        return 'bg-blue-100 text-blue-800';
+      case 'read':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'responded':
+        return 'bg-green-100 text-green-800';
+      case 'archived':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-CA', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const loadGrants = async () => {
     try {
@@ -715,6 +789,22 @@ const AdminDashboard: React.FC = () => {
             <FaRobot />
             AI Research
           </button>
+          <button
+            onClick={() => setActiveTab('contacts')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+              activeTab === 'contacts'
+                ? 'bg-white text-orange-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <FaEnvelope />
+            Contact Messages
+            {contactSubmissions.filter(c => c.status === 'new').length > 0 && (
+              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                {contactSubmissions.filter(c => c.status === 'new').length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* AI Research Tab */}
@@ -723,6 +813,117 @@ const AdminDashboard: React.FC = () => {
             adminEmail={user?.email || 'admin'}
             onChangeApplied={loadGrants}
           />
+        )}
+
+        {/* Contacts Tab */}
+        {activeTab === 'contacts' && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-orange-600">{contactSubmissions.length}</p>
+                <p className="text-gray-600">Total Messages</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-blue-600">
+                  {contactSubmissions.filter(c => c.status === 'new').length}
+                </p>
+                <p className="text-gray-600">New</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-yellow-600">
+                  {contactSubmissions.filter(c => c.status === 'read').length}
+                </p>
+                <p className="text-gray-600">Read</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <p className="text-3xl font-bold text-green-600">
+                  {contactSubmissions.filter(c => c.status === 'responded').length}
+                </p>
+                <p className="text-gray-600">Responded</p>
+              </div>
+            </div>
+
+            {/* Contact Messages Table */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">Contact Form Submissions</h2>
+              </div>
+              {contactsLoading ? (
+                <div className="p-8 text-center text-gray-500">Loading messages...</div>
+              ) : contactSubmissions.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No contact submissions yet</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        From
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">
+                        Subject
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">
+                        Date
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase w-32">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {contactSubmissions.map((contact) => (
+                      <tr key={contact.id} className={`hover:bg-gray-50 ${contact.status === 'new' ? 'bg-blue-50' : ''}`}>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900">{contact.name}</div>
+                          <div className="text-xs text-gray-500">{contact.email}</div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
+                          <span className="line-clamp-1">{contact.subject || '(No subject)'}</span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">
+                          {formatDate(contact.createdAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getContactStatusColor(contact.status)}`}>
+                            {contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => {
+                              setSelectedContact(contact);
+                              setShowContactModal(true);
+                              if (contact.status === 'new') {
+                                handleUpdateContactStatus(contact.id, 'read');
+                              }
+                            }}
+                            className="text-teal-600 hover:text-teal-800 p-1.5 hover:bg-teal-50 rounded"
+                            title="View"
+                          >
+                            <FaEye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedContact(contact);
+                              setShowDeleteContactModal(true);
+                            }}
+                            className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded ml-1"
+                            title="Delete"
+                          >
+                            <FaTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
         )}
 
         {/* Grants Tab */}
@@ -1088,6 +1289,157 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Contact Modal */}
+      {showContactModal && selectedContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Contact Message</h2>
+              <button
+                onClick={() => {
+                  setShowContactModal(false);
+                  setSelectedContact(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">From</label>
+                  <p className="text-gray-900 font-medium">{selectedContact.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                  <a href={`mailto:${selectedContact.email}`} className="text-teal-600 hover:underline">
+                    {selectedContact.email}
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Date</label>
+                  <p className="text-gray-900">{formatDate(selectedContact.createdAt)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Status</label>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getContactStatusColor(selectedContact.status)}`}>
+                    {selectedContact.status.charAt(0).toUpperCase() + selectedContact.status.slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              {selectedContact.subject && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Subject</label>
+                  <p className="text-gray-900">{selectedContact.subject}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Message</label>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedContact.message}</p>
+                </div>
+              </div>
+
+              {/* Status Actions */}
+              <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <span className="text-sm text-gray-500 mr-2">Mark as:</span>
+                <button
+                  onClick={() => handleUpdateContactStatus(selectedContact.id, 'read')}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
+                    selectedContact.status === 'read'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <FaEye className="w-3 h-3" />
+                  Read
+                </button>
+                <button
+                  onClick={() => handleUpdateContactStatus(selectedContact.id, 'responded')}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
+                    selectedContact.status === 'responded'
+                      ? 'bg-green-100 text-green-800'
+                      : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <FaReply className="w-3 h-3" />
+                  Responded
+                </button>
+                <button
+                  onClick={() => handleUpdateContactStatus(selectedContact.id, 'archived')}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
+                    selectedContact.status === 'archived'
+                      ? 'bg-gray-200 text-gray-800'
+                      : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <FaArchive className="w-3 h-3" />
+                  Archived
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+              <a
+                href={`mailto:${selectedContact.email}?subject=Re: ${selectedContact.subject || 'Your inquiry to Green Buffalo'}`}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+              >
+                <FaReply />
+                Reply via Email
+              </a>
+              <button
+                onClick={() => {
+                  setShowContactModal(false);
+                  setSelectedContact(null);
+                }}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Contact Confirmation Modal */}
+      {showDeleteContactModal && selectedContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <FaExclamationTriangle className="text-2xl" />
+              <h2 className="text-xl font-bold">Delete Contact</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete the message from <strong>{selectedContact.name}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteContactModal(false);
+                  setSelectedContact(null);
+                }}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteContact}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
