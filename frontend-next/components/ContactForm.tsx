@@ -1,14 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiMail, FiUser, FiMessageSquare, FiSend, FiCheck } from 'react-icons/fi';
 import { submitContactForm } from '@/lib/contactService';
 
-export default function ContactForm() {
+interface ContactFormProps {
+  initialSubject?: string;
+  initialMessage?: string;
+  onSuccess?: () => void;
+  compact?: boolean;
+}
+
+export default function ContactForm({ initialSubject = '', initialMessage = '', onSuccess, compact = false }: ContactFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
+  const [subject, setSubject] = useState(initialSubject);
+  const [message, setMessage] = useState(initialMessage);
+
+  useEffect(() => {
+    if (initialSubject) setSubject(initialSubject);
+    if (initialMessage) setMessage(initialMessage);
+  }, [initialSubject, initialMessage]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -32,6 +44,10 @@ export default function ContactForm() {
       setEmail('');
       setSubject('');
       setMessage('');
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
     } finally {
@@ -41,11 +57,11 @@ export default function ContactForm() {
 
   if (success) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <FiCheck className="w-8 h-8 text-green-600" />
+      <div className={`bg-white ${compact ? 'p-4' : 'rounded-xl shadow-lg p-8'} text-center`}>
+        <div className={`${compact ? 'w-12 h-12' : 'w-16 h-16'} bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
+          <FiCheck className={`${compact ? 'w-6 h-6' : 'w-8 h-8'} text-green-600`} />
         </div>
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Message Sent!</h3>
+        <h3 className={`${compact ? 'text-lg' : 'text-xl'} font-bold text-gray-800 mb-2`}>Message Sent!</h3>
         <p className="text-gray-600 mb-6">
           Thank you for contacting us. We&apos;ll get back to you as soon as possible.
         </p>
@@ -60,11 +76,15 @@ export default function ContactForm() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">Get in Touch</h3>
-      <p className="text-gray-600 mb-6">
-        Have questions about grants or need assistance? We&apos;re here to help.
-      </p>
+    <div className={`bg-white ${compact ? '' : 'rounded-xl shadow-lg p-8'}`}>
+      {!compact && (
+        <>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Get in Touch</h3>
+          <p className="text-gray-600 mb-6">
+            Have questions about grants or need assistance? We&apos;re here to help.
+          </p>
+        </>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 text-sm">

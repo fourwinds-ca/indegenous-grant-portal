@@ -20,6 +20,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { isGrantTracked } from '@/lib/trackedGrants';
+import ContactForm from './ContactForm';
 
 interface GrantCardProps {
   grant: {
@@ -49,6 +50,7 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
   const { user } = useAuth();
   const tracked = user ? isGrantTracked(user.id, grant.id) : false;
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const portalUrl = typeof window !== 'undefined' ? window.location.origin : 'https://greenbuffalo.ca';
 
@@ -273,10 +275,8 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
           </div>
 
           {/* Request Support Button */}
-          <a
-            href={`https://fourwinds.ca/contact?grant=${encodeURIComponent(grant.title)}&ref=greenbuffalo`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setShowSupportModal(true)}
             className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-800 font-medium py-2.5 px-4 rounded-md border border-amber-200 transition-all duration-200 text-sm group"
           >
             <Image
@@ -288,7 +288,7 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
             />
             <span>Request Support</span>
             <FaHandsHelping className="text-amber-600 group-hover:scale-110 transition-transform" />
-          </a>
+          </button>
         </div>
       </div>
 
@@ -298,6 +298,63 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
           className="fixed inset-0 z-40"
           onClick={() => setShowShareMenu(false)}
         />
+      )}
+
+      {/* Request Support Modal */}
+      {showSupportModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-50"
+            onClick={() => setShowSupportModal(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-teal-600 to-emerald-600 px-6 py-4 rounded-t-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src="/greenbuffalo_logo.png"
+                      alt="Green Buffalo"
+                      width={32}
+                      height={32}
+                      className="object-contain"
+                    />
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Request Support</h3>
+                      <p className="text-teal-100 text-sm">Get help with your grant application</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowSupportModal(false)}
+                    className="text-white/80 hover:text-white p-1"
+                  >
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Grant Info */}
+              <div className="px-6 py-4 bg-teal-50 border-b border-teal-100">
+                <p className="text-sm text-teal-700 font-medium mb-1">Regarding Grant:</p>
+                <p className="text-teal-900 font-semibold">{grant.title}</p>
+                <p className="text-sm text-teal-600">{grant.agency} - {formatCurrency(grant.amount)}</p>
+              </div>
+
+              {/* Contact Form */}
+              <div className="p-6">
+                <ContactForm
+                  initialSubject={`Grant Support Request: ${grant.title}`}
+                  initialMessage={`I would like to request support for the following grant:\n\nGrant: ${grant.title}\nAgency: ${grant.agency}\nFunding: ${formatCurrency(grant.amount)}\nDeadline: ${formatDate(grant.deadline)}\n\nPlease describe your needs:\n`}
+                  onSuccess={() => {
+                    setTimeout(() => setShowSupportModal(false), 2000);
+                  }}
+                  compact
+                />
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
