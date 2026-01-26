@@ -3,7 +3,7 @@
 
 -- Contact submissions table
 CREATE TABLE IF NOT EXISTS contact_submissions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(200) NOT NULL,
   email VARCHAR(320) NOT NULL,
   subject VARCHAR(500),

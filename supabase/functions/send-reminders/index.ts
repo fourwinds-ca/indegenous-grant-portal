@@ -46,7 +46,7 @@ async function sendEmail(payload: EmailPayload, resendApiKey: string): Promise<b
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Green Buffalo <notifications@greenbuffalo.ca>',
+        from: 'Four Winds <support@fourwinds.ca>',
         to: payload.to,
         subject: payload.subject,
         html: payload.html,

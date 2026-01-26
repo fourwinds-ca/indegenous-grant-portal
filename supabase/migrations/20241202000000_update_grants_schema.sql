@@ -13,15 +13,27 @@ ALTER TABLE grants ADD COLUMN IF NOT EXISTS notes TEXT;
 -- Create index on province for filtering
 CREATE INDEX IF NOT EXISTS idx_grants_province ON grants(province);
 
--- Allow admins to insert/update/delete grants
-CREATE POLICY "Admins can insert grants"
-  ON grants FOR INSERT
-  WITH CHECK (true);
+-- Allow admins to insert/update/delete grants (only if not already exist)
+DO $$ BEGIN
+  CREATE POLICY "Admins can insert grants"
+    ON grants FOR INSERT
+    WITH CHECK (true);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Admins can update grants"
-  ON grants FOR UPDATE
-  USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Admins can update grants"
+    ON grants FOR UPDATE
+    USING (true);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Admins can delete grants"
-  ON grants FOR DELETE
-  USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Admins can delete grants"
+    ON grants FOR DELETE
+    USING (true);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

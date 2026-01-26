@@ -3,14 +3,14 @@
 
 -- Email subscriptions table
 CREATE TABLE IF NOT EXISTS email_subscriptions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(320) NOT NULL UNIQUE,
   name VARCHAR(200),
   is_active BOOLEAN DEFAULT true,
   subscription_type VARCHAR(50) DEFAULT 'all', -- all, new_grants, deadline_reminders, updates
   categories TEXT[], -- optional: specific grant categories to follow
   provinces TEXT[], -- optional: specific provinces to follow
-  unsubscribe_token UUID DEFAULT uuid_generate_v4(),
+  unsubscribe_token UUID DEFAULT gen_random_uuid(),
   subscribed_at TIMESTAMP DEFAULT NOW(),
   unsubscribed_at TIMESTAMP,
   last_email_sent TIMESTAMP,
@@ -60,7 +60,7 @@ CREATE POLICY "Admins can delete subscriptions"
 
 -- Email send log table (to track sent emails)
 CREATE TABLE IF NOT EXISTS email_send_log (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   subscription_id UUID REFERENCES email_subscriptions(id) ON DELETE SET NULL,
   email VARCHAR(320) NOT NULL,
   email_type VARCHAR(50) NOT NULL, -- new_grant, deadline_reminder, weekly_digest, etc.

@@ -3,7 +3,7 @@
 
 -- Table to store pending grant changes (new grants or updates)
 CREATE TABLE IF NOT EXISTS pending_grant_changes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Reference to existing grant (NULL for new grants)
   existing_grant_id UUID REFERENCES grants(id) ON DELETE CASCADE,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS pending_grant_changes (
 
 -- Table to track research runs
 CREATE TABLE IF NOT EXISTS grant_research_runs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Run metadata
   started_at TIMESTAMP DEFAULT NOW(),

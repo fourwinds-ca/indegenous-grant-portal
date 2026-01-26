@@ -22,7 +22,8 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 *.lcov
-
+.env.local
+.claude
 # nyc test coverage
 .nyc_output
 
@@ -31,7 +32,23 @@ coverage
 
 # Bower dependency directory (https://bower.io/)
 bower_components
-
+TEMP/
+.env.development
+.env.development.example
+.env.test
+.env.test.example
+.env.production
+.env.production.example
+.env.development
+.env.development.example
+.env.test
+.env.test.example
+.env.production
+.env.production.example
+.env.development
+.env.development.example
+.env.test
+.env.test.example
 # node-waf configuration
 .lock-wscript
 

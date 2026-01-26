@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Grants table - stores discovered grants and programs
 CREATE TABLE IF NOT EXISTS grants (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR(500) NOT NULL,
   description TEXT,
   agency VARCHAR(200),
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS grants (
 
 -- User grant applications - tracks which grants users have applied to
 CREATE TABLE IF NOT EXISTS user_grant_applications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id VARCHAR NOT NULL REFERENCES users(id),
   grant_id UUID NOT NULL REFERENCES grants(id),
   application_status VARCHAR(50) DEFAULT 'planning',
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS user_grant_applications (
 
 -- Reporting requirements tracking
 CREATE TABLE IF NOT EXISTS reporting_requirements (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   application_id UUID NOT NULL REFERENCES user_grant_applications(id),
   requirement_type VARCHAR(100) NOT NULL,
   description TEXT,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS reporting_requirements (
 
 -- Scraped sources tracking - to avoid duplicate scraping
 CREATE TABLE IF NOT EXISTS scraped_sources (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   url VARCHAR(1000) NOT NULL UNIQUE,
   domain VARCHAR(200),
   last_scraped TIMESTAMP DEFAULT NOW(),
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS scraped_sources (
 
 -- Analytics/metrics tracking
 CREATE TABLE IF NOT EXISTS metrics (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id VARCHAR REFERENCES users(id),
   metric_type VARCHAR(100) NOT NULL,
   value DECIMAL,
