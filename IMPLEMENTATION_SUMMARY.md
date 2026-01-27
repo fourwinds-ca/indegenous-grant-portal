@@ -14,7 +14,7 @@ Your admin dashboard now uses a **two-step AI workflow** for discovering and val
 
 #### Step 2: Claude Sonnet 4.5 (via OpenRouter)
 - **Purpose**: Intelligent analysis and comparison
-- **Model**: `anthropic/claude-sonnet-4-5`
+- **Model**: `anthropic/claude-sonnet-4.5`
 - **Input**: Perplexity results + Database grants
 - **Action**: Identifies new grants, updates, and deactivations
 - **Output**: Categorized changes with detailed reasoning

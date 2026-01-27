@@ -143,7 +143,7 @@ All costs through **OpenRouter** (single billing, pay-as-you-go):
 - Cost: ~$0.05-0.15 per research run
 
 ### Claude Sonnet 4.5
-- Model: `anthropic/claude-sonnet-4-5`
+- Model: `anthropic/claude-sonnet-4.5`
 - Cost: ~$0.05-0.15 per comparison
 
 **Total Cost per Research Run**: ~$0.10-0.30

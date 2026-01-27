@@ -39,12 +39,8 @@ interface PerplexityResponse {
   }>;
 }
 
-interface ClaudeResponse {
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
-}
+// OpenRouter returns all responses in OpenAI format (same as Perplexity)
+// So we can reuse PerplexityResponse interface for Claude too
 
 interface PerplexityRawGrant {
   title: string;
@@ -291,7 +287,7 @@ async function callClaudeComparison(
         "X-Title": "Four Winds Grant Portal",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4-5",
+        model: "anthropic/claude-sonnet-4.5",
         messages: [
           {
             role: "user",
@@ -309,8 +305,9 @@ async function callClaudeComparison(
     throw new Error(`Claude API error: ${response.status} - ${error}`);
   }
 
-  const data: ClaudeResponse = await response.json();
-  const content = data.content?.[0]?.text;
+  // OpenRouter returns responses in OpenAI format for all models
+  const data: PerplexityResponse = await response.json();
+  const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
     throw new Error("No content in Claude response");
