@@ -174,3 +174,8 @@ check_grants_admin.js
 check_all_tables.js
 verify_migration.js
 temp_grants_dump.sql
+check_rls_policies.js
+check_rls_status.sql
+check_rls.js
+test_rls_with_anon.js
+check_actual_rls.js
