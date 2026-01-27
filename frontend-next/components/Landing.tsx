@@ -31,7 +31,7 @@ import { subscribe } from '@/lib/subscriptionService';
 
 const Landing: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +46,7 @@ const Landing: React.FC = () => {
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscribeMessage, setSubscribeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const { signInWithEmail, signUpWithEmail, user } = useAuth();
+  const { signInWithEmail, signUpWithEmail, resetPasswordRequest, user } = useAuth();
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +55,17 @@ const Landing: React.FC = () => {
 
     try {
       let userData;
-      if (authMode === 'signin') {
+      if (authMode === 'forgot') {
+        await resetPasswordRequest({ email });
+        setSuccessMessage('Password reset email sent! Check your inbox.');
+        setEmail('');
+        setTimeout(() => {
+          setAuthMode('signin');
+          setSuccessMessage('');
+        }, 3000);
+        setIsLoading(false);
+        return;
+      } else if (authMode === 'signin') {
         userData = await signInWithEmail({ email, password });
       } else {
         userData = await signUpWithEmail({ email, password });
@@ -733,18 +743,26 @@ const Landing: React.FC = () => {
 
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {authMode === 'signin' ? 'Welcome Back' : 'Create Account'}
+                {authMode === 'signin' ? 'Welcome Back' : authMode === 'signup' ? 'Create Account' : 'Reset Password'}
               </h3>
               <p className="text-gray-600">
                 {authMessage || (authMode === 'signin'
                   ? 'Sign in to access your dashboard'
-                  : 'Start your funding journey today')}
+                  : authMode === 'signup'
+                  ? 'Start your funding journey today'
+                  : 'Enter your email to receive a password reset link')}
               </p>
             </div>
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 text-sm">
                 {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4 text-sm">
+                {successMessage}
               </div>
             )}
 
@@ -764,46 +782,64 @@ const Landing: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-                  placeholder="••••••••"
-                />
-              </div>
+              {authMode !== 'forgot' && (
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                    placeholder="••••••••"
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-teal-600 text-white py-3 rounded-md font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : 'Sign Up'}
+                {isLoading ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : authMode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
               </button>
             </form>
 
-            <div className="text-center text-sm text-gray-600 mt-6">
+            <div className="text-center text-sm text-gray-600 mt-6 space-y-2">
               {authMode === 'signin' ? (
-                <p>
-                  Don't have an account?{' '}
-                  <button
-                    onClick={() => {
-                      setAuthMode('signup');
-                      setError('');
-                      setAuthMessage('');
-                    }}
-                    className="text-teal-600 font-semibold hover:text-teal-700"
-                  >
-                    Sign Up
-                  </button>
-                </p>
-              ) : (
+                <>
+                  <p>
+                    <button
+                      onClick={() => {
+                        setAuthMode('forgot');
+                        setError('');
+                        setAuthMessage('');
+                        setSuccessMessage('');
+                      }}
+                      className="text-teal-600 hover:text-teal-700 underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  </p>
+                  <p>
+                    Don't have an account?{' '}
+                    <button
+                      onClick={() => {
+                        setAuthMode('signup');
+                        setError('');
+                        setAuthMessage('');
+                        setSuccessMessage('');
+                      }}
+                      className="text-teal-600 font-semibold hover:text-teal-700"
+                    >
+                      Sign Up
+                    </button>
+                  </p>
+                </>
+              ) : authMode === 'signup' ? (
                 <p>
                   Already have an account?{' '}
                   <button
@@ -811,10 +847,26 @@ const Landing: React.FC = () => {
                       setAuthMode('signin');
                       setError('');
                       setAuthMessage('');
+                      setSuccessMessage('');
                     }}
                     className="text-teal-600 font-semibold hover:text-teal-700"
                   >
                     Sign In
+                  </button>
+                </p>
+              ) : (
+                <p>
+                  Remember your password?{' '}
+                  <button
+                    onClick={() => {
+                      setAuthMode('signin');
+                      setError('');
+                      setAuthMessage('');
+                      setSuccessMessage('');
+                    }}
+                    className="text-teal-600 font-semibold hover:text-teal-700"
+                  >
+                    Back to Sign In
                   </button>
                 </p>
               )}

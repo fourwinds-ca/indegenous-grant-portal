@@ -55,7 +55,7 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
   const portalUrl = typeof window !== 'undefined' ? window.location.origin : 'https://greenbuffalo.ca';
 
   const getShareText = () => {
-    return `Check out this Indigenous grant opportunity: ${grant.title} - Up to ${formatCurrency(grant.amount)} from ${grant.agency}. Apply before ${formatDate(grant.deadline)}!`;
+    return `Check out this Indigenous grant opportunity: ${grant.title} from ${grant.agency}. Apply before ${formatDate(grant.deadline)}!`;
   };
 
   const getShareUrl = () => {
@@ -215,8 +215,8 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
             </div>
           </div>
 
-          {/* Funding Amount */}
-          <div className="flex items-start gap-2 text-sm">
+          {/* Funding Amount - Hidden */}
+          {/* <div className="flex items-start gap-2 text-sm">
             <FaDollarSign className="text-emerald-600 mt-0.5 flex-shrink-0" />
             <div>
               <span className="font-semibold text-gray-700">Funding:</span>
@@ -224,7 +224,7 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
                 {formatCurrency(grant.amount)}
               </span>
             </div>
-          </div>
+          </div> */}
 
           {/* Deadline */}
           <div className="flex items-start gap-2 text-sm">
@@ -338,14 +338,14 @@ const GrantCard: React.FC<GrantCardProps> = ({ grant, onApply }) => {
               <div className="px-6 py-4 bg-teal-50 border-b border-teal-100">
                 <p className="text-sm text-teal-700 font-medium mb-1">Regarding Grant:</p>
                 <p className="text-teal-900 font-semibold">{grant.title}</p>
-                <p className="text-sm text-teal-600">{grant.agency} - {formatCurrency(grant.amount)}</p>
+                <p className="text-sm text-teal-600">{grant.agency}</p>
               </div>
 
               {/* Contact Form */}
               <div className="p-6">
                 <ContactForm
                   initialSubject={`Grant Support Request: ${grant.title}`}
-                  initialMessage={`I would like to request support for the following grant:\n\nGrant: ${grant.title}\nAgency: ${grant.agency}\nFunding: ${formatCurrency(grant.amount)}\nDeadline: ${formatDate(grant.deadline)}\n\nPlease describe your needs:\n`}
+                  initialMessage={`I would like to request support for the following grant:\n\nGrant: ${grant.title}\nAgency: ${grant.agency}\nDeadline: ${formatDate(grant.deadline)}\n\nPlease describe your needs:\n`}
                   onSuccess={() => {
                     setTimeout(() => setShowSupportModal(false), 2000);
                   }}

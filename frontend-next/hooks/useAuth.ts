@@ -74,6 +74,16 @@ export function useAuth() {
     if (error) throw error;
   };
 
+  const resetPasswordRequest = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+    },
+  });
+
   return {
     user: session?.user,
     session,
@@ -83,5 +93,6 @@ export function useAuth() {
     signUpWithEmail: signUpWithEmail.mutateAsync,
     signOut: signOut.mutateAsync,
     signInWithOAuth,
+    resetPasswordRequest: resetPasswordRequest.mutateAsync,
   };
 }
