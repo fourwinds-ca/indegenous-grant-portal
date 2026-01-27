@@ -154,12 +154,13 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-CA', {
+    return new Date(dateStr).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
+      hour12: true,
     });
   };
 
