@@ -165,3 +165,12 @@ supabase/.temp
 # OS
 .DS_Store
 Thumbs.db
+
+# Migration and utility scripts (may contain sensitive data)
+migrate_data.js
+migrate_auth_users.js
+check_grants.js
+check_grants_admin.js
+check_all_tables.js
+verify_migration.js
+temp_grants_dump.sql
