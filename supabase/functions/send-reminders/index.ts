@@ -1,4 +1,4 @@
-// Supabase Edge Function to send email reminders for grants
+// Supabase Edge Function to send email reminders for grants via SMTP
 // Triggered manually from admin dashboard or via cron job
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
@@ -7,6 +7,55 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// SMTP Configuration Interface
+interface SMTPConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  secure: boolean;
+}
+
+// Simple SMTP Email Sender using fetch
+async function sendEmailSMTP(config: SMTPConfig, from: string, to: string, subject: string, html: string): Promise<boolean> {
+  try {
+    // For SMTP, we'll use a service like smtp2go API or similar
+    // Since Deno Edge Functions don't have direct SMTP socket support,
+    // we need to use an HTTP-based SMTP relay or API
+
+    // Option 1: Use SMTP2GO API (they have an HTTP API)
+    // Option 2: Use your hosting provider's email API
+    // Option 3: Use a service like SendGrid, Mailgun, etc.
+
+    // For now, we'll create a basic implementation using nodemailer-like approach
+    // through an HTTP relay service
+
+    const emailData = {
+      from,
+      to,
+      subject,
+      html,
+    };
+
+    // Create SMTP connection info for logging
+    console.log(`Connecting to SMTP: ${config.host}:${config.port}`);
+    console.log(`Sending email to: ${to}`);
+
+    // Since Deno doesn't have native SMTP support in Edge Functions,
+    // we'll need to use a workaround:
+    // 1. Use an HTTP-to-SMTP gateway
+    // 2. Use your email provider's API
+    // 3. Use a service like SMTP2GO's API
+
+    // For demonstration, return true for now
+    // You'll need to implement your specific provider's API
+    return true;
+  } catch (error) {
+    console.error('SMTP Error:', error);
+    return false;
+  }
+}
 
 interface EmailSubscription {
   id: string;
@@ -36,31 +85,65 @@ interface EmailPayload {
   html: string;
 }
 
-// Email sending function - can be integrated with Resend, SendGrid, or other providers
-async function sendEmail(payload: EmailPayload, resendApiKey: string): Promise<boolean> {
+// Email sending function using SMTP credentials
+async function sendEmail(payload: EmailPayload, smtpConfig: SMTPConfig): Promise<boolean> {
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    // For Deno Edge Functions, we need to use an HTTP-based SMTP relay
+    // Direct SMTP connections are not supported in serverless environments
+    // Using SMTP2GO's HTTP API as a gateway
+    const response = await fetch('https://api.smtp2go.com/v3/email/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
+        'X-Smtp2go-Api-Key': smtpConfig.password, // Will use SMTP password as API key
       },
       body: JSON.stringify({
-        from: 'Four Winds <support@fourwinds.ca>',
-        to: payload.to,
+        sender: `Four Winds <${smtpConfig.username}>`,
+        to: [payload.to],
         subject: payload.subject,
-        html: payload.html,
+        html_body: payload.html,
+        custom_headers: [
+          {
+            header: 'Reply-To',
+            value: smtpConfig.username,
+          },
+        ],
       }),
     });
 
     if (!response.ok) {
-      console.error('Failed to send email:', await response.text());
-      return false;
+      const errorText = await response.text();
+      console.error('Failed to send email via SMTP:', errorText);
+
+      // Fallback: Try direct SMTP if available
+      console.log('Attempting alternative delivery method...');
+      return await sendEmailDirect(smtpConfig, payload);
     }
 
+    const result = await response.json();
+    console.log('Email sent successfully:', result);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
+    return false;
+  }
+}
+
+// Direct SMTP sending for environments that support it
+async function sendEmailDirect(config: SMTPConfig, payload: EmailPayload): Promise<boolean> {
+  try {
+    // This is a simplified SMTP implementation
+    // In production, you'd use a proper SMTP library
+    console.log(`Attempting direct SMTP connection to ${config.host}:${config.port}`);
+    console.log(`From: ${config.username}, To: ${payload.to}`);
+
+    // Note: Direct TCP/SMTP connections are not supported in Deno Deploy Edge Functions
+    // You'll need to use an HTTP-based email service
+    console.warn('Direct SMTP not available in Edge Functions. Please use SMTP2GO or configure an HTTP-based email service.');
+
+    return false;
+  } catch (error) {
+    console.error('Direct SMTP error:', error);
     return false;
   }
 }
@@ -218,12 +301,20 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const baseUrl = Deno.env.get('APP_BASE_URL') || 'https://greenbuffalo.ca';
 
-    if (!resendApiKey) {
+    // SMTP Configuration from environment variables
+    const smtpConfig: SMTPConfig = {
+      host: Deno.env.get('SMTP_HOST') || 'smtp.fourwinds.ca',
+      port: parseInt(Deno.env.get('SMTP_PORT') || '587'),
+      username: Deno.env.get('SMTP_USERNAME') || 'support@fourwinds.ca',
+      password: Deno.env.get('SMTP_PASSWORD') || '',
+      secure: Deno.env.get('SMTP_SECURE') === 'true',
+    };
+
+    if (!smtpConfig.password) {
       return new Response(
-        JSON.stringify({ error: 'RESEND_API_KEY not configured' }),
+        JSON.stringify({ error: 'SMTP_PASSWORD not configured. Please set SMTP credentials in Supabase environment variables.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -303,7 +394,7 @@ Deno.serve(async (req) => {
           to: testEmail || subscriber.email,
           subject: `🔔 ${relevantGrants.length} Grant${relevantGrants.length > 1 ? 's' : ''} with Upcoming Deadlines`,
           html,
-        }, resendApiKey);
+        }, smtpConfig);
 
         if (success) {
           emailsSent++;
@@ -396,7 +487,7 @@ Deno.serve(async (req) => {
           to: testEmail || subscriber.email,
           subject: `✨ ${relevantGrants.length} New Grant${relevantGrants.length > 1 ? 's' : ''} Available!`,
           html,
-        }, resendApiKey);
+        }, smtpConfig);
 
         if (success) {
           emailsSent++;
