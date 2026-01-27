@@ -21,15 +21,14 @@ The enhanced AI research system uses a **two-step workflow**:
 Go to your Supabase Dashboard:
 https://supabase.com/dashboard/project/bjjoiwnhqtizqryragco/settings/functions
 
-Add these environment variables:
+Add this environment variable (only one API key needed!):
 
 ```bash
-# Perplexity AI API Key (for grant discovery)
-PERPLEXITY_API_KEY=your-perplexity-api-key-here
-
-# OpenRouter API Key (for Claude Sonnet 4.5 comparison)
+# OpenRouter API Key (routes to both Perplexity and Claude)
 OPENROUTER_API_KEY=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
 ```
+
+**That's it!** OpenRouter handles routing to both AI models.
 
 ### 2. Deploy the Enhanced Edge Function
 
@@ -48,9 +47,9 @@ From the Admin Dashboard:
 
 ## How It Works
 
-### Step 1: Perplexity Discovery
+### Step 1: Perplexity Discovery (via OpenRouter)
 
-Perplexity searches for:
+Perplexity Sonar Pro searches for:
 - Federal Indigenous programs (ISC, CIRNAC, NRCan, ECCC)
 - Provincial funding (all provinces)
 - Indigenous business development
@@ -60,9 +59,9 @@ Perplexity searches for:
 
 **Output**: Raw list of all grants found with source URLs
 
-### Step 2: Claude Comparison
+### Step 2: Claude Comparison (via OpenRouter)
 
-Claude receives:
+Claude Sonnet 4.5 receives:
 - Perplexity results (fresh web data)
 - Current database grants (existing data)
 
@@ -120,17 +119,14 @@ SELECT cron.schedule(
 
 ## Troubleshooting
 
-### Error: "Missing PERPLEXITY_API_KEY"
-- Add the API key to Supabase environment variables
-- Redeploy the function
-
 ### Error: "Missing OPENROUTER_API_KEY"
 - Add the API key to Supabase environment variables
 - Redeploy the function
 
 ### No results found
-- Check if Perplexity API is working (check logs)
-- Verify API keys are correct
+- Check if OpenRouter API key is valid
+- Verify you have credits on OpenRouter
+- Check function logs for detailed errors
 - Try manual research trigger
 
 ### Claude comparison fails
@@ -140,19 +136,19 @@ SELECT cron.schedule(
 
 ## Cost Estimates
 
-### Perplexity Deep Research
-- Model: `sonar-deep-research`
-- Cost: ~$0.10-0.30 per research run
-- Free tier: 5 requests/day
+All costs through **OpenRouter** (single billing, pay-as-you-go):
 
-### Claude Sonnet 4.5 (via OpenRouter)
+### Perplexity Sonar Pro
+- Model: `perplexity/sonar-pro`
+- Cost: ~$0.05-0.15 per research run
+
+### Claude Sonnet 4.5
 - Model: `anthropic/claude-sonnet-4-5`
 - Cost: ~$0.05-0.15 per comparison
-- Pay-as-you-go pricing
 
-**Total Cost per Research Run**: ~$0.15-0.45
+**Total Cost per Research Run**: ~$0.10-0.30
 
-**Monthly Cost** (weekly automated runs): ~$2.40-7.20/month
+**Monthly Cost** (weekly automated runs): ~$1.60-4.80/month
 
 ## Next Steps
 
@@ -166,8 +162,7 @@ SELECT cron.schedule(
 ## Support
 
 For issues with:
-- **Perplexity API**: https://docs.perplexity.ai/
-- **OpenRouter/Claude**: https://openrouter.ai/docs
+- **OpenRouter**: https://openrouter.ai/docs (handles both Perplexity and Claude)
 - **Supabase Functions**: https://supabase.com/docs/guides/functions
 
 Questions? Check the function logs at:

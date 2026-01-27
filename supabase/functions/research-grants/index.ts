@@ -213,42 +213,47 @@ IMPORTANT:
 - Return ONLY valid JSON, no markdown or explanatory text`;
 }
 
-// Call Perplexity Deep Research API (raw grant discovery)
+// Call Perplexity Deep Research via OpenRouter (raw grant discovery)
 async function callPerplexityDeepResearch(
   prompt: string,
   apiKey: string
 ): Promise<{ grants: PerplexityRawGrant[]; sources: string[] }> {
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "sonar-deep-research",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert grant researcher specializing in Canadian Indigenous funding programs. Always respond with valid JSON only.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: 0.1,
-      max_tokens: 8000,
-    }),
-  });
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://greenbuffalo.ca",
+        "X-Title": "Four Winds Grant Portal",
+      },
+      body: JSON.stringify({
+        model: "perplexity/sonar-pro",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert grant researcher specializing in Canadian Indigenous funding programs. Always respond with valid JSON only.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 8000,
+      }),
+    }
+  );
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Perplexity API error: ${response.status} - ${error}`);
+    throw new Error(`Perplexity via OpenRouter error: ${response.status} - ${error}`);
   }
 
   const data: PerplexityResponse = await response.json();
-  const content = data.choices[0]?.message?.content;
+  const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
     throw new Error("No content in Perplexity response");
@@ -481,14 +486,14 @@ Deno.serve(async (req) => {
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const perplexityApiKey = Deno.env.get("PERPLEXITY_API_KEY");
+    const openrouterApiKey = Deno.env.get("OPENROUTER_API_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
     }
 
-    if (!perplexityApiKey) {
-      throw new Error("Missing PERPLEXITY_API_KEY environment variable");
+    if (!openrouterApiKey) {
+      throw new Error("Missing OPENROUTER_API_KEY environment variable");
     }
 
     // Determine trigger type
@@ -534,26 +539,20 @@ Deno.serve(async (req) => {
 
       console.log(`Fetched ${existingGrants?.length || 0} existing grants`);
 
-      // STEP 1: Call Perplexity for raw grant discovery
+      // STEP 1: Call Perplexity (via OpenRouter) for raw grant discovery
       const perplexityPrompt = buildPerplexityPrompt();
-      console.log("STEP 1: Calling Perplexity Deep Research API...");
+      console.log("STEP 1: Calling Perplexity Sonar Pro (via OpenRouter)...");
 
       const perplexityResults = await callPerplexityDeepResearch(
         perplexityPrompt,
-        perplexityApiKey
+        openrouterApiKey
       );
       console.log(
         `Perplexity found ${perplexityResults.grants?.length || 0} grants`
       );
 
-      // Get OpenRouter API key for Claude
-      const openrouterApiKey = Deno.env.get("OPENROUTER_API_KEY");
-      if (!openrouterApiKey) {
-        throw new Error("Missing OPENROUTER_API_KEY environment variable");
-      }
-
-      // STEP 2: Call Claude for comparison and analysis
-      console.log("STEP 2: Calling Claude Sonnet 4.5 for comparison...");
+      // STEP 2: Call Claude (via OpenRouter) for comparison and analysis
+      console.log("STEP 2: Calling Claude Sonnet 4.5 (via OpenRouter)...");
       const claudePrompt = buildClaudeComparisonPrompt(
         perplexityResults.grants || [],
         existingGrants || []

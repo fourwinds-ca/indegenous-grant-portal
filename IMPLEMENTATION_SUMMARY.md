@@ -6,15 +6,15 @@
 
 Your admin dashboard now uses a **two-step AI workflow** for discovering and validating Indigenous grants:
 
-#### Step 1: Perplexity Deep Research
+#### Step 1: Perplexity Sonar Pro (via OpenRouter)
 - **Purpose**: Comprehensive grant discovery
-- **Model**: `sonar-deep-research`
+- **Model**: `perplexity/sonar-pro`
 - **Action**: Searches the web for ALL Indigenous grants in Canada
 - **Output**: Raw list of grants with source URLs
 
-#### Step 2: Claude Sonnet 4.5 Comparison
+#### Step 2: Claude Sonnet 4.5 (via OpenRouter)
 - **Purpose**: Intelligent analysis and comparison
-- **Model**: `anthropic/claude-sonnet-4-5` (via OpenRouter)
+- **Model**: `anthropic/claude-sonnet-4-5`
 - **Input**: Perplexity results + Database grants
 - **Action**: Identifies new grants, updates, and deactivations
 - **Output**: Categorized changes with detailed reasoning
@@ -35,16 +35,17 @@ Your admin dashboard now uses a **two-step AI workflow** for discovering and val
 
 ## 🔧 Required Setup
 
-### 1. Add Supabase Environment Variables
+### 1. Add Supabase Environment Variable
 
 Go to: https://supabase.com/dashboard/project/bjjoiwnhqtizqryragco/settings/functions
 
-Add these variables:
+Add this variable (only one API key needed!):
 
 ```bash
-PERPLEXITY_API_KEY=your-perplexity-api-key
 OPENROUTER_API_KEY=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
 ```
+
+OpenRouter routes requests to both Perplexity and Claude automatically.
 
 ### 2. Test the System
 
@@ -66,10 +67,11 @@ Perplexity → [Finds grants AND compares] → Pending Changes
 
 ### After (New System)
 ```
-Perplexity → [Raw Discovery] → Claude → [Smart Comparison] → Pending Changes
+OpenRouter → Perplexity → [Raw Discovery] → Claude → [Smart Comparison] → Pending Changes
 ```
-- Perplexity: Comprehensive web research
-- Claude: Detailed reasoning and analysis
+- **Single API key** (OpenRouter routes everything)
+- Perplexity Sonar Pro: Comprehensive web research
+- Claude Sonnet 4.5: Detailed reasoning and analysis
 - Better change detection
 - Specific explanations for each change
 
@@ -80,7 +82,7 @@ Perplexity → [Raw Discovery] → Claude → [Smart Comparison] → Pending Cha
 - **Updates**: 2-8 (deadline changes, amount updates)
 - **Deactivations**: 1-5 (expired programs)
 - **Execution Time**: 30-90 seconds
-- **Cost**: ~$0.15-0.45 per run
+- **Cost**: ~$0.10-0.30 per run (via OpenRouter)
 
 ### Admin Review Interface
 For each pending change, you'll see:
@@ -121,20 +123,22 @@ SELECT cron.schedule(
 
 ## 💰 Cost Breakdown
 
-### Perplexity API
-- Model: `sonar-deep-research`
-- Cost: ~$0.10-0.30 per research
-- Free tier: 5 requests/day (then pay-as-you-go)
+**All through OpenRouter** (single API key, single billing):
 
-### OpenRouter (Claude Sonnet 4.5)
+### Perplexity Sonar Pro
+- Model: `perplexity/sonar-pro`
+- Cost: ~$0.05-0.15 per research
+
+### Claude Sonnet 4.5
 - Model: `anthropic/claude-sonnet-4-5`
 - Cost: ~$0.05-0.15 per comparison
-- Pay-as-you-go pricing
 
 ### Total
-- **Per Research**: $0.15-0.45
-- **Weekly (4 runs/month)**: $2.40-7.20/month
-- **Daily (30 runs/month)**: $4.50-13.50/month
+- **Per Research**: $0.10-0.30
+- **Weekly (4 runs/month)**: $1.60-4.80/month
+- **Daily (30 runs/month)**: $3.00-9.00/month
+
+**Simpler billing** with OpenRouter - one account, one API key, one invoice.
 
 ## 🔍 How Claude Improves Accuracy
 
@@ -192,8 +196,9 @@ https://supabase.com/dashboard/project/bjjoiwnhqtizqryragco/functions/research-g
 ## 🎓 Technical Details
 
 ### API Integrations
-- **Perplexity**: Direct API at https://api.perplexity.ai/chat/completions
-- **Claude**: Via OpenRouter at https://openrouter.ai/api/v1/chat/completions
+- **OpenRouter**: Single endpoint at https://openrouter.ai/api/v1/chat/completions
+  - Routes to `perplexity/sonar-pro` for discovery
+  - Routes to `anthropic/claude-sonnet-4-5` for comparison
 
 ### Data Flow
 ```
@@ -227,11 +232,11 @@ Grants database updated
 
 ## 📝 Next Steps
 
-1. ✅ Add API keys to Supabase (REQUIRED)
+1. ✅ Add OPENROUTER_API_KEY to Supabase (REQUIRED - only one key!)
 2. ✅ Test the system manually
 3. ⭐ Review and approve first batch of changes
 4. ⭐ (Optional) Set up weekly automation
-5. ⭐ (Optional) Monitor costs and adjust frequency
+5. ⭐ (Optional) Monitor costs via OpenRouter dashboard
 
 ## 🔗 Related Files
 
@@ -244,8 +249,7 @@ Grants database updated
 
 Questions or issues? Check:
 - Function logs (link above)
-- [Perplexity API Docs](https://docs.perplexity.ai/)
-- [OpenRouter Docs](https://openrouter.ai/docs)
+- [OpenRouter Docs](https://openrouter.ai/docs) - handles both AI models
 - [Supabase Functions Guide](https://supabase.com/docs/guides/functions)
 
 ---
