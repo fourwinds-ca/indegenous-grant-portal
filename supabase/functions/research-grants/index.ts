@@ -1,5 +1,7 @@
 // Supabase Edge Function: research-grants
-// Uses Perplexity Deep Research to find and validate Indigenous grants in Canada
+// Two-step AI workflow:
+// 1. Perplexity Deep Research: Finds all Indigenous grants in Canada
+// 2. Claude Sonnet 4.5: Compares results with database and identifies changes
 // Results are stored as pending changes for admin approval
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
@@ -37,6 +39,27 @@ interface PerplexityResponse {
   }>;
 }
 
+interface ClaudeResponse {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+}
+
+interface PerplexityRawGrant {
+  title: string;
+  description: string;
+  agency: string;
+  program: string;
+  category: string;
+  eligibility: string;
+  application_link: string;
+  deadline: string;
+  amount: string;
+  source_url: string;
+  province: string;
+}
+
 interface ResearchResult {
   new_grants: Grant[];
   updated_grants: Array<{
@@ -52,30 +75,13 @@ interface ResearchResult {
   sources: string[];
 }
 
-// Build the research prompt with existing grants context
-function buildResearchPrompt(existingGrants: Grant[]): string {
-  const grantSummaries = existingGrants
-    .map(
-      (g) =>
-        `- "${g.title}" by ${g.agency} (${g.province || "Federal"}) - Deadline: ${g.deadline || "Ongoing"} - Status: ${g.status}`
-    )
-    .join("\n");
+// STEP 1: Build Perplexity research prompt (raw discovery, no comparison)
+function buildPerplexityPrompt(): string {
+  return `You are a grant research specialist focused on Indigenous funding programs in Canada.
 
-  return `You are a grant research specialist focused on Indigenous funding programs in Canada. Your task is to:
+TASK: Find ALL Indigenous-focused grants, funding programs, and financial assistance currently available in Canada (2024-2026).
 
-1. IDENTIFY NEW GRANTS: Search for Indigenous-focused grants, funding programs, and financial assistance that are NOT in the existing database below.
-
-2. VALIDATE EXISTING GRANTS: Check if any grants in our database have:
-   - Changed deadlines
-   - Updated funding amounts
-   - New eligibility criteria
-   - Status changes (closed, suspended, etc.)
-   - Updated application links
-
-3. FLAG INACTIVE GRANTS: Identify any grants that appear to be discontinued, expired, or no longer available.
-
-CURRENT DATABASE (${existingGrants.length} grants):
-${grantSummaries}
+SEARCH FOCUS AREAS:
 
 SEARCH FOCUS AREAS:
 - Federal Canadian government Indigenous programs (ISC, CIRNAC, NRCan, ECCC)
@@ -88,7 +94,7 @@ SEARCH FOCUS AREAS:
 
 RESPONSE FORMAT (JSON only, no markdown):
 {
-  "new_grants": [
+  "grants": [
     {
       "title": "Full official grant name",
       "description": "Detailed description of the program",
@@ -99,47 +105,119 @@ RESPONSE FORMAT (JSON only, no markdown):
       "application_link": "Direct URL to application page",
       "deadline": "YYYY-MM-DD format or 'Ongoing'",
       "amount": "Funding amount description (e.g., 'Up to $500K per project')",
-      "currency": "CAD",
-      "status": "active or inactive",
       "source_url": "URL where you found this information",
-      "province": "Federal, Ontario, British Columbia, Alberta, Quebec, Manitoba, Saskatchewan, etc.",
-      "is_publicly_available": true
+      "province": "Federal, Ontario, British Columbia, Alberta, Quebec, Manitoba, Saskatchewan, etc."
     }
   ],
-  "updated_grants": [
-    {
-      "existing_title": "Exact title from existing database",
-      "updates": {
-        "deadline": "new deadline if changed",
-        "amount": "new amount if changed",
-        "status": "new status if changed"
-      },
-      "reason": "Why this update is needed"
-    }
-  ],
-  "deactivated_grants": [
-    {
-      "title": "Exact title from existing database",
-      "reason": "Why this should be deactivated"
-    }
-  ],
-  "confidence_score": 0.85,
   "sources": ["https://source1.com", "https://source2.com"]
 }
 
 Important:
 - Only include grants specifically for Indigenous peoples, communities, or organizations in Canada
-- Verify information is current (2024-2025)
+- Verify information is current (2024-2026)
 - Include direct application links when possible
-- Be thorough but accurate - quality over quantity
+- Be thorough and comprehensive - find as many as possible
 - Return ONLY valid JSON, no explanatory text`;
 }
 
-// Call Perplexity Deep Research API
+// STEP 2: Build Claude comparison prompt (compares Perplexity results with database)
+function buildClaudeComparisonPrompt(
+  perplexityGrants: PerplexityRawGrant[],
+  existingGrants: Grant[]
+): string {
+  const perplexityJson = JSON.stringify(perplexityGrants, null, 2);
+  const existingJson = JSON.stringify(
+    existingGrants.map((g) => ({
+      id: g.id,
+      title: g.title,
+      agency: g.agency,
+      province: g.province,
+      deadline: g.deadline,
+      amount: g.amount,
+      status: g.status,
+      application_link: g.application_link,
+    })),
+    null,
+    2
+  );
+
+  return `You are Claude, an AI assistant specializing in data comparison and analysis.
+
+TASK: Compare two datasets of Indigenous grants in Canada and identify what has changed.
+
+DATASET 1 - PERPLEXITY RESEARCH (Fresh web research):
+${perplexityJson}
+
+DATASET 2 - CURRENT DATABASE (Existing grants):
+${existingJson}
+
+YOUR JOB:
+1. **NEW GRANTS**: Identify grants in Perplexity results that are NOT in the database
+   - Compare by title, agency, and program name (allow for minor title variations)
+   - Only mark as new if it's genuinely a different grant
+
+2. **UPDATED GRANTS**: Identify grants that exist in both but have changes
+   - Compare: deadline, amount, application_link, status, eligibility
+   - Specify exactly what changed (old value → new value)
+   - Provide reasoning for why you believe this is an update
+
+3. **DEACTIVATED GRANTS**: Identify grants in database that are NOT found in Perplexity results
+   - Only flag if the grant appears to be discontinued/expired
+   - Provide reasoning (e.g., "past deadline", "no longer listed on agency website")
+
+RESPONSE FORMAT (JSON only):
+{
+  "new_grants": [
+    {
+      "title": "...",
+      "description": "...",
+      "agency": "...",
+      "program": "...",
+      "category": "...",
+      "eligibility": "...",
+      "application_link": "...",
+      "deadline": "YYYY-MM-DD or Ongoing",
+      "amount": "...",
+      "currency": "CAD",
+      "status": "active",
+      "source_url": "...",
+      "province": "...",
+      "is_publicly_available": true
+    }
+  ],
+  "updated_grants": [
+    {
+      "existing_title": "Exact title from database",
+      "existing_grant_id": "grant ID from database",
+      "updates": {
+        "deadline": "new value",
+        "amount": "new value"
+      },
+      "reason": "Deadline extended from 2024-12-31 to 2025-06-30 per updated website"
+    }
+  ],
+  "deactivated_grants": [
+    {
+      "title": "Exact title from database",
+      "grant_id": "grant ID from database",
+      "reason": "Grant deadline passed and no renewal found"
+    }
+  ],
+  "confidence_score": 0.9
+}
+
+IMPORTANT:
+- Be precise with title matching (account for slight variations)
+- Only flag updates if you're confident the change is real
+- Provide detailed reasoning for all updates and deactivations
+- Return ONLY valid JSON, no markdown or explanatory text`;
+}
+
+// Call Perplexity Deep Research API (raw grant discovery)
 async function callPerplexityDeepResearch(
   prompt: string,
   apiKey: string
-): Promise<ResearchResult> {
+): Promise<{ grants: PerplexityRawGrant[]; sources: string[] }> {
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
     headers: {
@@ -189,6 +267,68 @@ async function callPerplexityDeepResearch(
   } catch {
     console.error("Failed to parse JSON:", jsonContent);
     throw new Error("Failed to parse Perplexity response as JSON");
+  }
+}
+
+// Call Claude Sonnet 4.5 via OpenRouter API (comparison and analysis)
+async function callClaudeComparison(
+  prompt: string,
+  apiKey: string
+): Promise<ResearchResult> {
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://greenbuffalo.ca",
+        "X-Title": "Four Winds Grant Portal",
+      },
+      body: JSON.stringify({
+        model: "anthropic/claude-sonnet-4-5",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 8000,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Claude API error: ${response.status} - ${error}`);
+  }
+
+  const data: ClaudeResponse = await response.json();
+  const content = data.content?.[0]?.text;
+
+  if (!content) {
+    throw new Error("No content in Claude response");
+  }
+
+  // Parse JSON from response (handle potential markdown code blocks)
+  let jsonContent = content;
+  if (content.includes("```json")) {
+    jsonContent = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+  } else if (content.includes("```")) {
+    jsonContent = content.replace(/```\n?/g, "");
+  }
+
+  try {
+    const parsed = JSON.parse(jsonContent.trim());
+    // Add sources array if not present (Claude doesn't provide sources)
+    if (!parsed.sources) {
+      parsed.sources = [];
+    }
+    return parsed;
+  } catch {
+    console.error("Failed to parse JSON from Claude:", jsonContent);
+    throw new Error("Failed to parse Claude response as JSON");
   }
 }
 
@@ -394,16 +534,43 @@ Deno.serve(async (req) => {
 
       console.log(`Fetched ${existingGrants?.length || 0} existing grants`);
 
-      // Build and execute research prompt
-      const prompt = buildResearchPrompt(existingGrants || []);
-      console.log("Calling Perplexity Deep Research API...");
+      // STEP 1: Call Perplexity for raw grant discovery
+      const perplexityPrompt = buildPerplexityPrompt();
+      console.log("STEP 1: Calling Perplexity Deep Research API...");
 
-      const results = await callPerplexityDeepResearch(prompt, perplexityApiKey);
-      console.log("Research completed:", {
+      const perplexityResults = await callPerplexityDeepResearch(
+        perplexityPrompt,
+        perplexityApiKey
+      );
+      console.log(
+        `Perplexity found ${perplexityResults.grants?.length || 0} grants`
+      );
+
+      // Get OpenRouter API key for Claude
+      const openrouterApiKey = Deno.env.get("OPENROUTER_API_KEY");
+      if (!openrouterApiKey) {
+        throw new Error("Missing OPENROUTER_API_KEY environment variable");
+      }
+
+      // STEP 2: Call Claude for comparison and analysis
+      console.log("STEP 2: Calling Claude Sonnet 4.5 for comparison...");
+      const claudePrompt = buildClaudeComparisonPrompt(
+        perplexityResults.grants || [],
+        existingGrants || []
+      );
+
+      const results = await callClaudeComparison(claudePrompt, openrouterApiKey);
+      console.log("Claude comparison completed:", {
         new: results.new_grants?.length || 0,
         updates: results.updated_grants?.length || 0,
         deactivations: results.deactivated_grants?.length || 0,
       });
+
+      // Merge sources from both AI calls
+      results.sources = [
+        ...(perplexityResults.sources || []),
+        ...(results.sources || []),
+      ];
 
       // Process results and create pending changes
       const counts = await processResearchResults(
