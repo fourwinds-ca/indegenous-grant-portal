@@ -603,7 +603,7 @@ const Landing: React.FC = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Image
@@ -629,6 +629,23 @@ const Landing: React.FC = () => {
                   Four Winds
                 </a>
               </p>
+            </div>
+            <div>
+              <h4 className="text-white font-semibold mb-4">Supported By</h4>
+              <a
+                href="https://natural-resources.canada.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-white rounded-lg p-3 hover:opacity-90 transition-opacity"
+              >
+                <Image
+                  src="/nrc_logo.png"
+                  alt="Natural Resources Canada"
+                  width={200}
+                  height={50}
+                  className="object-contain"
+                />
+              </a>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
