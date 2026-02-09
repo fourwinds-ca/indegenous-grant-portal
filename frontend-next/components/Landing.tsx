@@ -215,6 +215,15 @@ const Landing: React.FC = () => {
               <h1 className="text-xl md:text-2xl font-bold text-teal-700">
                 Green Buffalo Indigenous Grant Portal
               </h1>
+              <div className="hidden md:block border-l border-gray-300 pl-3 ml-2">
+                <Image
+                  src="/nrc_logo.png"
+                  alt="Natural Resources Canada"
+                  width={120}
+                  height={30}
+                  className="object-contain"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Link
