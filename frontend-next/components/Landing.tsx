@@ -219,8 +219,8 @@ const Landing: React.FC = () => {
                 <Image
                   src="/nrc_logo.png"
                   alt="Natural Resources Canada"
-                  width={120}
-                  height={30}
+                  width={240}
+                  height={60}
                   className="object-contain"
                 />
               </div>
