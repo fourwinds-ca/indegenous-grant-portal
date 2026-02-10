@@ -46,6 +46,22 @@ export async function fetchPendingChanges(): Promise<PendingGrantChange[]> {
   return data || [];
 }
 
+export async function fetchRejectedChanges(): Promise<PendingGrantChange[]> {
+  const { data, error } = await supabase
+    .from('pending_grant_changes')
+    .select('*')
+    .eq('status', 'rejected')
+    .order('reviewed_at', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error('Error fetching rejected changes:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
 export async function fetchAllPendingChanges(): Promise<PendingGrantChange[]> {
   const { data, error } = await supabase
     .from('pending_grant_changes')
@@ -106,6 +122,28 @@ export async function rejectChange(
   }
 
   return data as { success: boolean; error?: string };
+}
+
+export async function unrejectAndApproveChange(changeId: string, adminEmail: string): Promise<{ success: boolean; error?: string }> {
+  // First, reset the change to pending status
+  const { error: updateError } = await supabase
+    .from('pending_grant_changes')
+    .update({
+      status: 'pending',
+      reviewed_by: null,
+      reviewed_at: null,
+      rejection_notes: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', changeId);
+
+  if (updateError) {
+    console.error('Error resetting rejected change:', updateError);
+    return { success: false, error: updateError.message };
+  }
+
+  // Now approve it
+  return approveChange(changeId, adminEmail);
 }
 
 export async function triggerManualResearch(): Promise<{ success: boolean; run_id?: string; error?: string }> {

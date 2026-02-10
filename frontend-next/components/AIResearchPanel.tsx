@@ -20,9 +20,11 @@ import {
   PendingGrantChange,
   ResearchRun,
   fetchPendingChanges,
+  fetchRejectedChanges,
   fetchResearchRuns,
   approveChange,
   rejectChange,
+  unrejectAndApproveChange,
   triggerManualResearch,
 } from '@/lib/pendingChangesService';
 
@@ -33,6 +35,7 @@ interface AIResearchPanelProps {
 
 const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeApplied }) => {
   const [pendingChanges, setPendingChanges] = useState<PendingGrantChange[]>([]);
+  const [rejectedChanges, setRejectedChanges] = useState<PendingGrantChange[]>([]);
   const [researchRuns, setResearchRuns] = useState<ResearchRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [researching, setResearching] = useState(false);
@@ -50,11 +53,13 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
   const loadData = async () => {
     setLoading(true);
     try {
-      const [changes, runs] = await Promise.all([
+      const [changes, rejected, runs] = await Promise.all([
         fetchPendingChanges(),
+        fetchRejectedChanges(),
         fetchResearchRuns(),
       ]);
       setPendingChanges(changes);
+      setRejectedChanges(rejected);
       setResearchRuns(runs);
     } catch (err) {
       console.error('Error loading AI research data:', err);
@@ -114,6 +119,7 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
       if (result.success) {
         setSuccessMessage('Change rejected');
         setPendingChanges(prev => prev.filter(c => c.id !== change.id));
+        loadData(); // Reload to refresh rejected list
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         setError(result.error || 'Failed to reject change');
@@ -124,6 +130,26 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
       setProcessingId(null);
       setRejectionNotes('');
       setShowDetailModal(false);
+    }
+  };
+
+  const handleUnrejectAndApprove = async (change: PendingGrantChange) => {
+    setProcessingId(change.id);
+    setError('');
+    try {
+      const result = await unrejectAndApproveChange(change.id, adminEmail);
+      if (result.success) {
+        setSuccessMessage('Change approved and applied!');
+        setRejectedChanges(prev => prev.filter(c => c.id !== change.id));
+        onChangeApplied();
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        setError(result.error || 'Failed to approve change');
+      }
+    } catch (err) {
+      setError('Failed to approve change');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -357,6 +383,87 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
           </div>
         )}
       </div>
+
+      {/* Rejected Funds Section */}
+      {rejectedChanges.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-red-400">
+          <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <FaTimes className="text-red-500" />
+              Rejected Funds
+              <span className="ml-2 px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                {rejectedChanges.length}
+              </span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Previously rejected grant changes - you can re-approve if needed
+            </p>
+          </div>
+
+          <div className="divide-y divide-gray-100">
+            {rejectedChanges.map((change) => (
+              <div key={change.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      {getChangeTypeIcon(change.change_type)}
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getChangeTypeBadge(change.change_type)}`}>
+                        {change.change_type === 'new' ? 'New Grant' : change.change_type === 'update' ? 'Update' : 'Deactivate'}
+                      </span>
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                        Rejected
+                      </span>
+                    </div>
+                    <h4 className="font-medium text-gray-900 truncate">
+                      {(change.proposed_data as Record<string, unknown>).title as string}
+                    </h4>
+                    <p className="text-sm text-gray-500 truncate">
+                      {(change.proposed_data as Record<string, unknown>).agency as string}
+                    </p>
+                    {change.rejection_notes && (
+                      <p className="mt-1 text-xs text-red-600 italic">
+                        Rejection reason: {change.rejection_notes}
+                      </p>
+                    )}
+                    {change.reviewed_by && change.reviewed_at && (
+                      <p className="mt-1 text-xs text-gray-400">
+                        Rejected by {change.reviewed_by} on {formatDate(change.reviewed_at)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedChange(change);
+                        setShowDetailModal(true);
+                      }}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+                      title="View Details"
+                    >
+                      <FaEye />
+                    </button>
+                    <button
+                      onClick={() => handleUnrejectAndApprove(change)}
+                      disabled={processingId === change.id}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                      title="Approve Again"
+                    >
+                      {processingId === change.id ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <>
+                          <FaCheck />
+                          Approve Again
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {showDetailModal && selectedChange && (
