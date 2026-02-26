@@ -56,10 +56,9 @@ const TrackedGrants: React.FC = () => {
   };
 
   const formatDeadline = (deadline: string): string => {
+    if (!deadline) return 'Ongoing';
     const date = new Date(deadline);
-    if (date.getFullYear() >= 2099) {
-      return 'Ongoing';
-    }
+    if (isNaN(date.getTime()) || date.getFullYear() <= 1970 || date.getFullYear() >= 2099) return 'Ongoing';
     return date.toLocaleDateString('en-CA', {
       year: 'numeric',
       month: 'short',
@@ -68,13 +67,14 @@ const TrackedGrants: React.FC = () => {
   };
 
   const getDeadlineStatus = (deadline: string): { color: string; text: string } => {
+    if (!deadline) return { color: 'text-blue-600 bg-blue-50', text: 'Ongoing' };
     const date = new Date(deadline);
+    if (isNaN(date.getTime()) || date.getFullYear() <= 1970 || date.getFullYear() >= 2099) {
+      return { color: 'text-blue-600 bg-blue-50', text: 'Ongoing' };
+    }
     const now = new Date();
     const daysUntil = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (date.getFullYear() >= 2099) {
-      return { color: 'text-blue-600 bg-blue-50', text: 'Ongoing' };
-    }
     if (daysUntil < 0) {
       return { color: 'text-red-600 bg-red-50', text: 'Closed' };
     }

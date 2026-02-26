@@ -89,7 +89,9 @@ const Applications: React.FC = () => {
   };
 
   const formatDate = (dateString: string): string => {
+    if (!dateString) return 'Ongoing';
     const date = new Date(dateString);
+    if (isNaN(date.getTime()) || date.getFullYear() <= 1970 || date.getFullYear() >= 2099) return 'Ongoing';
     return date.toLocaleDateString('en-CA', {
       year: 'numeric',
       month: 'short',
