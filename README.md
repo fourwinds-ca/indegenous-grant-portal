@@ -1,4 +1,4 @@
-# Indigenous Grant Tracker   
+# Indigenous Grant Tracker 
 
 A comprehensive web application to help Indigenous communities discover, track, and manage grant applications.
 
