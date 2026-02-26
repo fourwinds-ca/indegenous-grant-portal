@@ -225,7 +225,7 @@ async function callPerplexityDeepResearch(
         "X-Title": "Four Winds Grant Portal",
       },
       body: JSON.stringify({
-        model: "perplexity/sonar-pro",
+        model: "perplexity/sonar-deep-research",
         messages: [
           {
             role: "system",
