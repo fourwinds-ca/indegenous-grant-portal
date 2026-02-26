@@ -42,19 +42,6 @@ interface PerplexityResponse {
 // OpenRouter returns all responses in OpenAI format (same as Perplexity)
 // So we can reuse PerplexityResponse interface for Claude too
 
-interface PerplexityRawGrant {
-  title: string;
-  description: string;
-  agency: string;
-  program: string;
-  category: string;
-  eligibility: string;
-  application_link: string;
-  deadline: string;
-  amount: string;
-  source_url: string;
-  province: string;
-}
 
 interface ResearchResult {
   new_grants: Grant[];
@@ -71,57 +58,38 @@ interface ResearchResult {
   sources: string[];
 }
 
-// STEP 1: Build Perplexity research prompt (raw discovery, no comparison)
+// STEP 1: Build Perplexity research prompt (free-form research report)
 function buildPerplexityPrompt(): string {
-  return `You are a grant research specialist focused on Indigenous funding programs in Canada.
+  return `Research all Indigenous-focused grants, funding programs, rebates, and financial assistance currently available in Canada (2025-2026).
 
-TASK: Find ALL Indigenous-focused grants, funding programs, and financial assistance currently available in Canada (2024-2026).
-
-SEARCH FOCUS AREAS:
-
-SEARCH FOCUS AREAS:
-- Federal Canadian government Indigenous programs (ISC, CIRNAC, NRCan, ECCC)
-- Provincial Indigenous funding (Ontario, BC, Alberta, Quebec, Manitoba, Saskatchewan)
+Cover these areas thoroughly:
+- Federal Canadian government Indigenous programs (ISC, CIRNAC, NRCan, ECCC, CMHC, ISED)
+- Provincial Indigenous funding (Ontario, BC, Alberta, Quebec, Manitoba, Saskatchewan, Atlantic provinces)
 - Indigenous business development and entrepreneurship grants
 - Clean energy and environmental programs for Indigenous communities
 - Infrastructure funding for First Nations, Métis, and Inuit
 - Economic development corporations and regional programs
-- New 2024-2025 funding announcements
+- New 2025 funding announcements and recently opened programs
 
-RESPONSE FORMAT (JSON only, no markdown):
-{
-  "grants": [
-    {
-      "title": "Full official grant name",
-      "description": "Detailed description of the program",
-      "agency": "Administering agency name",
-      "program": "Program code or short name",
-      "category": "One of: Environment, Economic Development, Infrastructure, Electric Vehicles, Housing, Health, Education, Culture",
-      "eligibility": "Who can apply - be specific about Indigenous eligibility",
-      "application_link": "Direct URL to application page",
-      "deadline": "YYYY-MM-DD format or 'Ongoing'",
-      "amount": "Funding amount description (e.g., 'Up to $500K per project')",
-      "source_url": "URL where you found this information",
-      "province": "Federal, Ontario, British Columbia, Alberta, Quebec, Manitoba, Saskatchewan, etc."
-    }
-  ],
-  "sources": ["https://source1.com", "https://source2.com"]
+For each grant/program you find, provide:
+- Full official name
+- Administering agency
+- What the funding is for (description)
+- Who is eligible (be specific about Indigenous eligibility requirements)
+- Funding amount or range
+- Application deadline (or whether it is ongoing/rolling)
+- Where to apply (URL)
+- Province/territory or Federal
+- Program category (Environment, Economic Development, Infrastructure, Housing, Health, Education, Culture, etc.)
+
+Be as comprehensive as possible. Include all active programs you can find.`;
 }
 
-Important:
-- Only include grants specifically for Indigenous peoples, communities, or organizations in Canada
-- Verify information is current (2024-2026)
-- Include direct application links when possible
-- Be thorough and comprehensive - find as many as possible
-- Return ONLY valid JSON, no explanatory text`;
-}
-
-// STEP 2: Build Claude comparison prompt (compares Perplexity results with database)
+// STEP 2: Build Claude comparison prompt (parses Perplexity report + compares with database)
 function buildClaudeComparisonPrompt(
-  perplexityGrants: PerplexityRawGrant[],
+  perplexityReport: string,
   existingGrants: Grant[]
 ): string {
-  const perplexityJson = JSON.stringify(perplexityGrants, null, 2);
   const existingJson = JSON.stringify(
     existingGrants.map((g) => ({
       id: g.id,
@@ -141,8 +109,8 @@ function buildClaudeComparisonPrompt(
 
 TASK: Compare two datasets of Indigenous grants in Canada and identify what has changed.
 
-DATASET 1 - PERPLEXITY RESEARCH (Fresh web research):
-${perplexityJson}
+DATASET 1 - PERPLEXITY RESEARCH REPORT (Fresh deep web research):
+${perplexityReport}
 
 DATASET 2 - CURRENT DATABASE (Existing grants):
 ${existingJson}
@@ -209,11 +177,11 @@ IMPORTANT:
 - Return ONLY valid JSON, no markdown or explanatory text`;
 }
 
-// Call Perplexity Deep Research via OpenRouter (raw grant discovery)
+// Call Perplexity Deep Research via OpenRouter - returns raw research report text
 async function callPerplexityDeepResearch(
   prompt: string,
   apiKey: string
-): Promise<{ grants: PerplexityRawGrant[]; sources: string[] }> {
+): Promise<string> {
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
     {
@@ -227,11 +195,6 @@ async function callPerplexityDeepResearch(
       body: JSON.stringify({
         model: "perplexity/sonar-deep-research",
         messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert grant researcher specializing in Canadian Indigenous funding programs. Always respond with valid JSON only.",
-          },
           {
             role: "user",
             content: prompt,
@@ -255,20 +218,8 @@ async function callPerplexityDeepResearch(
     throw new Error("No content in Perplexity response");
   }
 
-  // Parse JSON from response (handle potential markdown code blocks)
-  let jsonContent = content;
-  if (content.includes("```json")) {
-    jsonContent = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-  } else if (content.includes("```")) {
-    jsonContent = content.replace(/```\n?/g, "");
-  }
-
-  try {
-    return JSON.parse(jsonContent.trim());
-  } catch {
-    console.error("Failed to parse JSON:", jsonContent);
-    throw new Error("Failed to parse Perplexity response as JSON");
-  }
+  console.log(`Perplexity report length: ${content.length} chars`);
+  return content;
 }
 
 // Call Claude Sonnet 4.5 via OpenRouter API (comparison and analysis)
@@ -540,18 +491,16 @@ Deno.serve(async (req) => {
       const perplexityPrompt = buildPerplexityPrompt();
       console.log("STEP 1: Calling Perplexity Sonar Pro (via OpenRouter)...");
 
-      const perplexityResults = await callPerplexityDeepResearch(
+      const perplexityReport = await callPerplexityDeepResearch(
         perplexityPrompt,
         openrouterApiKey
       );
-      console.log(
-        `Perplexity found ${perplexityResults.grants?.length || 0} grants`
-      );
+      console.log("STEP 1 complete: Perplexity research report received");
 
       // STEP 2: Call Claude (via OpenRouter) for comparison and analysis
       console.log("STEP 2: Calling Claude Sonnet 4.5 (via OpenRouter)...");
       const claudePrompt = buildClaudeComparisonPrompt(
-        perplexityResults.grants || [],
+        perplexityReport,
         existingGrants || []
       );
 
@@ -561,12 +510,6 @@ Deno.serve(async (req) => {
         updates: results.updated_grants?.length || 0,
         deactivations: results.deactivated_grants?.length || 0,
       });
-
-      // Merge sources from both AI calls
-      results.sources = [
-        ...(perplexityResults.sources || []),
-        ...(results.sources || []),
-      ];
 
       // Process results and create pending changes
       const counts = await processResearchResults(
