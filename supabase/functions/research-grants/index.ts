@@ -424,6 +424,81 @@ async function processResearchResults(
   return { newCount, updateCount, deactivateCount };
 }
 
+// Run the full research pipeline in the background
+async function performResearch(
+  supabase: ReturnType<typeof createClient>,
+  runId: string,
+  openrouterApiKey: string
+): Promise<void> {
+  try {
+    // Fetch all existing grants
+    const { data: existingGrants, error: grantsError } = await supabase
+      .from("grants")
+      .select("*")
+      .order("title");
+
+    if (grantsError) {
+      throw new Error(`Failed to fetch grants: ${grantsError.message}`);
+    }
+
+    console.log(`Fetched ${existingGrants?.length || 0} existing grants`);
+
+    // STEP 1: Perplexity Deep Research (returns narrative report)
+    console.log("STEP 1: Calling Perplexity sonar-deep-research...");
+    const perplexityReport = await callPerplexityDeepResearch(
+      buildPerplexityPrompt(),
+      openrouterApiKey
+    );
+    console.log("STEP 1 complete: Perplexity report received");
+
+    // STEP 2: Claude parses the report and compares with database
+    console.log("STEP 2: Calling Claude Sonnet 4.5...");
+    const results = await callClaudeComparison(
+      buildClaudeComparisonPrompt(perplexityReport, existingGrants || []),
+      openrouterApiKey
+    );
+    console.log("STEP 2 complete:", {
+      new: results.new_grants?.length || 0,
+      updates: results.updated_grants?.length || 0,
+      deactivations: results.deactivated_grants?.length || 0,
+    });
+
+    // Save pending changes
+    const counts = await processResearchResults(
+      supabase,
+      results,
+      existingGrants || [],
+      runId
+    );
+
+    // Mark run as completed
+    await supabase
+      .from("grant_research_runs")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        grants_analyzed: existingGrants?.length || 0,
+        new_grants_found: counts.newCount,
+        updates_found: counts.updateCount,
+        deactivations_found: counts.deactivateCount,
+        raw_response: results,
+      })
+      .eq("id", runId);
+
+    console.log(`Research run ${runId} completed successfully`);
+  } catch (error) {
+    console.error(`Research run ${runId} failed:`, error);
+    await supabase
+      .from("grant_research_runs")
+      .update({
+        status: "failed",
+        completed_at: new Date().toISOString(),
+        error_message: error instanceof Error ? error.message : String(error),
+      })
+      .eq("id", runId);
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -431,7 +506,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const openrouterApiKey = Deno.env.get("OPENROUTER_API_KEY");
@@ -439,7 +513,6 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
     }
-
     if (!openrouterApiKey) {
       throw new Error("Missing OPENROUTER_API_KEY environment variable");
     }
@@ -448,23 +521,17 @@ Deno.serve(async (req) => {
     let triggeredBy = "manual";
     try {
       const body = await req.json();
-      if (body?.triggered_by === "cron") {
-        triggeredBy = "cron";
-      }
+      if (body?.triggered_by === "cron") triggeredBy = "cron";
     } catch {
-      // No body or invalid JSON - manual trigger
+      // No body - manual trigger
     }
 
-    // Create Supabase client with service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Create research run record
+    // Create the run record synchronously (fast)
     const { data: runData, error: runError } = await supabase
       .from("grant_research_runs")
-      .insert({
-        triggered_by: triggeredBy,
-        status: "running",
-      })
+      .insert({ triggered_by: triggeredBy, status: "running" })
       .select()
       .single();
 
@@ -474,99 +541,27 @@ Deno.serve(async (req) => {
 
     const runId = runData.id;
 
-    try {
-      // Fetch all existing grants
-      const { data: existingGrants, error: grantsError } = await supabase
-        .from("grants")
-        .select("*")
-        .order("title");
+    // Run the actual research in the background so we can respond immediately
+    // This avoids CORS issues from long-running requests timing out
+    // deno-lint-ignore no-explicit-any
+    (globalThis as any).EdgeRuntime?.waitUntil(
+      performResearch(supabase, runId, openrouterApiKey)
+    );
 
-      if (grantsError) {
-        throw new Error(`Failed to fetch grants: ${grantsError.message}`);
+    // Return immediately — frontend polls grant_research_runs for completion
+    return new Response(
+      JSON.stringify({
+        success: true,
+        run_id: runId,
+        message: "Research started. Check the dashboard in 3-5 minutes for results.",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       }
-
-      console.log(`Fetched ${existingGrants?.length || 0} existing grants`);
-
-      // STEP 1: Call Perplexity (via OpenRouter) for raw grant discovery
-      const perplexityPrompt = buildPerplexityPrompt();
-      console.log("STEP 1: Calling Perplexity Sonar Pro (via OpenRouter)...");
-
-      const perplexityReport = await callPerplexityDeepResearch(
-        perplexityPrompt,
-        openrouterApiKey
-      );
-      console.log("STEP 1 complete: Perplexity research report received");
-
-      // STEP 2: Call Claude (via OpenRouter) for comparison and analysis
-      console.log("STEP 2: Calling Claude Sonnet 4.5 (via OpenRouter)...");
-      const claudePrompt = buildClaudeComparisonPrompt(
-        perplexityReport,
-        existingGrants || []
-      );
-
-      const results = await callClaudeComparison(claudePrompt, openrouterApiKey);
-      console.log("Claude comparison completed:", {
-        new: results.new_grants?.length || 0,
-        updates: results.updated_grants?.length || 0,
-        deactivations: results.deactivated_grants?.length || 0,
-      });
-
-      // Process results and create pending changes
-      const counts = await processResearchResults(
-        supabase,
-        results,
-        existingGrants || [],
-        runId
-      );
-
-      // Update research run with results
-      await supabase
-        .from("grant_research_runs")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          grants_analyzed: existingGrants?.length || 0,
-          new_grants_found: counts.newCount,
-          updates_found: counts.updateCount,
-          deactivations_found: counts.deactivateCount,
-          raw_response: results,
-        })
-        .eq("id", runId);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          run_id: runId,
-          grants_analyzed: existingGrants?.length || 0,
-          pending_changes: {
-            new_grants: counts.newCount,
-            updates: counts.updateCount,
-            deactivations: counts.deactivateCount,
-          },
-          message:
-            "Research completed. Pending changes await admin approval in the dashboard.",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-    } catch (error) {
-      // Update research run with error
-      await supabase
-        .from("grant_research_runs")
-        .update({
-          status: "failed",
-          completed_at: new Date().toISOString(),
-          error_message: error instanceof Error ? error.message : String(error),
-        })
-        .eq("id", runId);
-
-      throw error;
-    }
+    );
   } catch (error) {
     console.error("Research function error:", error);
-
     return new Response(
       JSON.stringify({
         success: false,
