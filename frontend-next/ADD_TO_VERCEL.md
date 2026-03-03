@@ -6,12 +6,12 @@ Copy and paste these into Vercel:
 
 ### NEXT_PUBLIC_SUPABASE_URL
 ```
-https://qouymvuwrdndmxsbghav.supabase.co
+https://bjjoiwnhqtizqryragco.supabase.co
 ```
 
 ### NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvdXltdnV3cmRuZG14c2JnaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMjE4MzgsImV4cCI6MjA3NjU5NzgzOH0.a4y4_K7j6M06U0KJC1AgfljJLslqcrksB19abIebUtg
+<your-supabase-anon-key>
 ```
 
 ---
@@ -26,13 +26,13 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvdXltdnV
 
    **Variable 1:**
    - Name: `NEXT_PUBLIC_SUPABASE_URL`
-   - Value: `https://qouymvuwrdndmxsbghav.supabase.co`
+   - Value: `https://bjjoiwnhqtizqryragco.supabase.co`
    - Environments: ✅ Production ✅ Preview ✅ Development
    - Click **Save**
 
    **Variable 2:**
    - Name: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvdXltdnV3cmRuZG14c2JnaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMjE4MzgsImV4cCI6MjA3NjU5NzgzOH0.a4y4_K7j6M06U0KJC1AgfljJLslqcrksB19abIebUtg`
+   - Value: `<your-supabase-anon-key>`
    - Environments: ✅ Production ✅ Preview ✅ Development
    - Click **Save**
 
@@ -51,14 +51,14 @@ cd frontend-next
 vercel env add NEXT_PUBLIC_SUPABASE_URL
 
 # When prompted:
-# - What's the value?: https://qouymvuwrdndmxsbghav.supabase.co
+# - What's the value?: https://bjjoiwnhqtizqryragco.supabase.co
 # - Environments: Select all (Production, Preview, Development)
 
 # Add NEXT_PUBLIC_SUPABASE_ANON_KEY
 vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # When prompted:
-# - What's the value?: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvdXltdnV3cmRuZG14c2JnaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMjE4MzgsImV4cCI6MjA3NjU5NzgzOH0.a4y4_K7j6M06U0KJC1AgfljJLslqcrksB19abIebUtg
+# - What's the value?: <your-supabase-anon-key>
 # - Environments: Select all (Production, Preview, Development)
 
 # Redeploy
