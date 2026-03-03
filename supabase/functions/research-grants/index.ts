@@ -58,18 +58,51 @@ interface ResearchResult {
   sources: string[];
 }
 
-// STEP 1: Build Perplexity research prompt (free-form research report)
-function buildPerplexityPrompt(): string {
-  return `Research all Indigenous-focused grants, funding programs, rebates, and financial assistance currently available in Canada (2025-2026).
+// Government domains whitelist
+const FEDERAL_GOV_DOMAINS = [
+  "canada.ca",
+  "gc.ca",
+  "isc-sac.gc.ca",
+  "rcaanc-cirnac.gc.ca",
+  "nrcan-rncan.gc.ca",
+  "ec.gc.ca",
+  "cmhc-schl.gc.ca",
+  "ised-isde.gc.ca",
+  "infrastructure.gc.ca",
+  "sac-isc.gc.ca",
+];
 
-Cover these areas thoroughly:
-- Federal Canadian government Indigenous programs (ISC, CIRNAC, NRCan, ECCC, CMHC, ISED)
-- Provincial Indigenous funding (Ontario, BC, Alberta, Quebec, Manitoba, Saskatchewan, Atlantic provinces)
-- Indigenous business development and entrepreneurship grants
-- Clean energy and environmental programs for Indigenous communities
-- Infrastructure funding for First Nations, Métis, and Inuit
-- Economic development corporations and regional programs
-- New 2025 funding announcements and recently opened programs
+const PROVINCIAL_GOV_DOMAINS = [
+  "gov.bc.ca",
+  "alberta.ca",
+  "ontario.ca",
+  "quebec.ca",
+  "gov.mb.ca",
+  "gov.sk.ca",
+  "gov.ns.ca",
+  "gnb.ca",
+  "gov.nl.ca",
+  "gov.pe.ca",
+  "gov.nt.ca",
+  "gov.nu.ca",
+  "gov.yk.ca",
+];
+
+// Category-specific search prompts for multi-step research
+interface SearchCategory {
+  name: string;
+  prompt: string;
+}
+
+function buildSearchCategories(): SearchCategory[] {
+  const govSourceInstruction = `
+CRITICAL SOURCE RESTRICTION:
+- ONLY search and cite official Canadian government websites ending in .gc.ca or provincial government domains.
+- Allowed federal domains: ${FEDERAL_GOV_DOMAINS.join(", ")}
+- Allowed provincial domains: ${PROVINCIAL_GOV_DOMAINS.join(", ")}
+- Do NOT include results from non-government websites, news articles, blogs, or third-party aggregators.
+- Only include grants where you can provide a direct government URL as the source.
+- If you cannot find a government URL for a grant, do NOT include it.
 
 For each grant/program you find, provide:
 - Full official name
@@ -78,11 +111,80 @@ For each grant/program you find, provide:
 - Who is eligible (be specific about Indigenous eligibility requirements)
 - Funding amount or range
 - Application deadline (or whether it is ongoing/rolling)
-- Where to apply (URL)
+- Where to apply (direct government URL only)
 - Province/territory or Federal
-- Program category (Environment, Economic Development, Infrastructure, Housing, Health, Education, Culture, etc.)
+- Program category`;
 
-Be as comprehensive as possible. Include all active programs you can find.`;
+  return [
+    {
+      name: "Federal Indigenous Programs (ISC, CIRNAC)",
+      prompt: `Research all Indigenous-focused grants and funding programs currently available from Indigenous Services Canada (ISC) and Crown-Indigenous Relations and Northern Affairs Canada (CIRNAC) for 2025-2026.
+
+Search ONLY on these government websites:
+- isc-sac.gc.ca / sac-isc.gc.ca
+- rcaanc-cirnac.gc.ca
+- canada.ca/en/indigenous-services-canada
+- canada.ca/en/crown-indigenous-relations-northern-affairs
+
+Include programs for First Nations, Métis, and Inuit communities covering: education, health, social services, governance, land claims, treaty obligations, and community development.
+${govSourceInstruction}`,
+    },
+    {
+      name: "Energy & Environment (NRCan, ECCC)",
+      prompt: `Research all Indigenous-focused grants and funding programs currently available from Natural Resources Canada (NRCan) and Environment and Climate Change Canada (ECCC) for 2025-2026.
+
+Search ONLY on these government websites:
+- nrcan-rncan.gc.ca
+- ec.gc.ca
+- canada.ca/en/natural-resources
+- canada.ca/en/environment-climate-change
+
+Include programs for: clean energy, renewable energy, climate action, environmental monitoring, Indigenous climate leadership, diesel reduction, and energy efficiency for Indigenous communities.
+${govSourceInstruction}`,
+    },
+    {
+      name: "Housing & Infrastructure (CMHC, Infrastructure Canada)",
+      prompt: `Research all Indigenous-focused grants and funding programs currently available from Canada Mortgage and Housing Corporation (CMHC) and Infrastructure Canada for 2025-2026.
+
+Search ONLY on these government websites:
+- cmhc-schl.gc.ca
+- infrastructure.gc.ca
+- canada.ca/en/office-infrastructure
+
+Include programs for: housing, water and wastewater, broadband connectivity, community infrastructure, roads, bridges, and building projects for Indigenous communities.
+${govSourceInstruction}`,
+    },
+    {
+      name: "Economic Development (ISED, Regional Agencies)",
+      prompt: `Research all Indigenous-focused economic development grants and funding programs currently available from Innovation, Science and Economic Development Canada (ISED) and federal regional development agencies for 2025-2026.
+
+Search ONLY on these government websites:
+- ised-isde.gc.ca
+- canada.ca/en/innovation-science-economic-development
+- feddev-ontario.gc.ca
+- wd-deo.gc.ca
+- dec-ced.gc.ca
+
+Include programs for: Indigenous business development, entrepreneurship, innovation, technology, tourism, and economic diversification.
+${govSourceInstruction}`,
+    },
+    {
+      name: "Provincial Indigenous Programs",
+      prompt: `Research all Indigenous-focused grants and funding programs currently available from Canadian provincial and territorial governments for 2025-2026.
+
+Search ONLY on provincial government websites:
+- gov.bc.ca, alberta.ca, ontario.ca, quebec.ca, gov.mb.ca, gov.sk.ca
+- gov.ns.ca, gnb.ca, gov.nl.ca, gov.pe.ca, gov.nt.ca, gov.nu.ca, gov.yk.ca
+
+Include programs from all provinces and territories covering: Indigenous community development, business grants, housing, education, health, cultural programs, and reconciliation initiatives.
+${govSourceInstruction}`,
+    },
+  ];
+}
+
+// Legacy single prompt (kept for reference, no longer used)
+function buildPerplexityPrompt(): string {
+  return buildSearchCategories()[0].prompt;
 }
 
 // STEP 2: Build Claude comparison prompt (parses Perplexity report + compares with database)
@@ -174,7 +276,9 @@ IMPORTANT:
 - Be precise with title matching (account for slight variations)
 - Only flag updates if you're confident the change is real
 - Provide detailed reasoning for all updates and deactivations
-- Return ONLY valid JSON, no markdown or explanatory text`;
+- Return ONLY valid JSON, no markdown or explanatory text
+- CRITICAL: Only include grants that have a source URL from an official Canadian government website (.gc.ca or provincial government domain). Reject any grants sourced from non-government sites.
+- Every application_link and source_url MUST be a government website URL`;
 }
 
 // Call Perplexity Deep Research via OpenRouter - returns raw research report text
@@ -201,7 +305,7 @@ async function callPerplexityDeepResearch(
           },
         ],
         temperature: 0.1,
-        max_tokens: 8000,
+        max_tokens: 16000,
       }),
     }
   );
@@ -222,6 +326,28 @@ async function callPerplexityDeepResearch(
   return content;
 }
 
+// Multi-step search: Run Perplexity for each category and merge results
+async function callPerplexityMultiStep(
+  apiKey: string
+): Promise<string> {
+  const categories = buildSearchCategories();
+  const reports: string[] = [];
+
+  for (const category of categories) {
+    console.log(`Researching category: ${category.name}...`);
+    try {
+      const report = await callPerplexityDeepResearch(category.prompt, apiKey);
+      reports.push(`\n=== ${category.name} ===\n${report}`);
+      console.log(`Category "${category.name}" complete (${report.length} chars)`);
+    } catch (error) {
+      console.error(`Category "${category.name}" failed:`, error);
+      reports.push(`\n=== ${category.name} ===\nResearch failed for this category.`);
+    }
+  }
+
+  return reports.join("\n\n");
+}
+
 // Call Claude Sonnet 4.5 via OpenRouter API (comparison and analysis)
 async function callClaudeComparison(
   prompt: string,
@@ -238,7 +364,7 @@ async function callClaudeComparison(
         "X-Title": "Four Winds Grant Portal",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4.5",
+        model: "anthropic/claude-sonnet-4-5-20250514",
         messages: [
           {
             role: "user",
@@ -246,7 +372,7 @@ async function callClaudeComparison(
           },
         ],
         temperature: 0.1,
-        max_tokens: 8000,
+        max_tokens: 16000,
       }),
     }
   );
@@ -443,16 +569,13 @@ async function performResearch(
 
     console.log(`Fetched ${existingGrants?.length || 0} existing grants`);
 
-    // STEP 1: Perplexity Deep Research (returns narrative report)
-    console.log("STEP 1: Calling Perplexity sonar-deep-research...");
-    const perplexityReport = await callPerplexityDeepResearch(
-      buildPerplexityPrompt(),
-      openrouterApiKey
-    );
-    console.log("STEP 1 complete: Perplexity report received");
+    // STEP 1: Multi-step Perplexity Deep Research (category-by-category)
+    console.log("STEP 1: Running multi-step Perplexity deep research across 5 categories...");
+    const perplexityReport = await callPerplexityMultiStep(openrouterApiKey);
+    console.log("STEP 1 complete: All category reports received");
 
-    // STEP 2: Claude parses the report and compares with database
-    console.log("STEP 2: Calling Claude Sonnet 4.5...");
+    // STEP 2: Claude parses the merged report and compares with database
+    console.log("STEP 2: Calling Claude Sonnet 4.5 for comparison...");
     const results = await callClaudeComparison(
       buildClaudeComparisonPrompt(perplexityReport, existingGrants || []),
       openrouterApiKey
