@@ -42,7 +42,7 @@ Go to: https://supabase.com/dashboard/project/bjjoiwnhqtizqryragco/settings/func
 Add this variable (only one API key needed!):
 
 ```bash
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=<your-openrouter-api-key>
 ```
 
 OpenRouter routes requests to both Perplexity and Claude automatically.

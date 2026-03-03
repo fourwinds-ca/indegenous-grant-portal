@@ -25,7 +25,7 @@ Add this environment variable (only one API key needed!):
 
 ```bash
 # OpenRouter API Key (routes to both Perplexity and Claude)
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=<your-openrouter-api-key>
 ```
 
 **That's it!** OpenRouter handles routing to both AI models.
