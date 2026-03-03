@@ -131,21 +131,27 @@ const TRUSTED_ORG_DOMAINS = [
   "edo.ca",                 // Economic Developers Council of Ontario (Indigenous programs)
 ];
 
-// Category-specific search prompts for multi-step research
-interface SearchCategory {
-  name: string;
-  prompt: string;
-}
+// Build a single comprehensive Perplexity Deep Research prompt
+function buildPerplexityPrompt(): string {
+  return `Conduct a comprehensive deep research study of ALL Indigenous-focused grants, funding programs, scholarships, loans, and financial support currently available in Canada for 2025-2026.
 
-function buildSearchCategories(): SearchCategory[] {
-  const govSourceInstruction = `
+Search across ALL of these source categories:
+
+1. FEDERAL GOVERNMENT — Indigenous Services Canada (ISC), Crown-Indigenous Relations (CIRNAC), Natural Resources Canada (NRCan), Environment and Climate Change Canada (ECCC), CMHC, Infrastructure Canada, ISED, Canadian Heritage
+   - Websites: ${FEDERAL_GOV_DOMAINS.join(", ")}
+
+2. PROVINCIAL & TERRITORIAL GOVERNMENTS — All 13 provinces and territories
+   - Websites: ${PROVINCIAL_GOV_DOMAINS.join(", ")}
+
+3. INDIGENOUS ORGANIZATIONS & CROWN CORPORATIONS — NACCA, Indspire, First Nations Finance Authority, First Nations Health Authority, BDC, Canada Council for the Arts, research councils (SSHRC, CIHR, NSERC, NRC), regional development agencies (FedDev, ACOA, CanNor, PacifiCan, PrairiesCan, etc.)
+   - Websites: ${TRUSTED_ORG_DOMAINS.join(", ")}
+
+Include programs covering: education, health, housing, infrastructure, clean energy, economic development, business loans, scholarships, arts & culture, environmental monitoring, governance, capacity building, and community development for First Nations, Métis, and Inuit communities.
+
 CRITICAL SOURCE RESTRICTION:
-- ONLY search and cite official Canadian government websites OR trusted Indigenous organizations and Crown corporations listed below.
-- Allowed federal government domains: ${FEDERAL_GOV_DOMAINS.join(", ")}
-- Allowed provincial government domains: ${PROVINCIAL_GOV_DOMAINS.join(", ")}
-- Allowed trusted Indigenous organizations & Crown corporations: ${TRUSTED_ORG_DOMAINS.join(", ")}
+- ONLY include grants sourced from the domains listed above.
 - Do NOT include results from news articles, blogs, consulting firms, or third-party grant aggregator websites.
-- Only include grants where you can provide a direct URL from one of the allowed domains as the source.
+- Only include grants where you can provide a direct URL from one of the allowed domains.
 - If you cannot find a URL from an allowed domain for a grant, do NOT include it.
 
 For each grant/program you find, provide:
@@ -157,97 +163,9 @@ For each grant/program you find, provide:
 - Application deadline (or whether it is ongoing/rolling)
 - Where to apply (direct URL from an allowed domain only)
 - Province/territory or Federal
-- Program category`;
+- Program category
 
-  return [
-    {
-      name: "Federal Indigenous Programs (ISC, CIRNAC)",
-      prompt: `Research all Indigenous-focused grants and funding programs currently available from Indigenous Services Canada (ISC) and Crown-Indigenous Relations and Northern Affairs Canada (CIRNAC) for 2025-2026.
-
-Search ONLY on these government websites:
-- isc-sac.gc.ca / sac-isc.gc.ca
-- rcaanc-cirnac.gc.ca
-- canada.ca/en/indigenous-services-canada
-- canada.ca/en/crown-indigenous-relations-northern-affairs
-
-Include programs for First Nations, Métis, and Inuit communities covering: education, health, social services, governance, land claims, treaty obligations, and community development.
-${govSourceInstruction}`,
-    },
-    {
-      name: "Energy & Environment (NRCan, ECCC)",
-      prompt: `Research all Indigenous-focused grants and funding programs currently available from Natural Resources Canada (NRCan) and Environment and Climate Change Canada (ECCC) for 2025-2026.
-
-Search ONLY on these government websites:
-- nrcan-rncan.gc.ca
-- ec.gc.ca
-- canada.ca/en/natural-resources
-- canada.ca/en/environment-climate-change
-
-Include programs for: clean energy, renewable energy, climate action, environmental monitoring, Indigenous climate leadership, diesel reduction, and energy efficiency for Indigenous communities.
-${govSourceInstruction}`,
-    },
-    {
-      name: "Housing & Infrastructure (CMHC, Infrastructure Canada)",
-      prompt: `Research all Indigenous-focused grants and funding programs currently available from Canada Mortgage and Housing Corporation (CMHC) and Infrastructure Canada for 2025-2026.
-
-Search ONLY on these government websites:
-- cmhc-schl.gc.ca
-- infrastructure.gc.ca
-- canada.ca/en/office-infrastructure
-
-Include programs for: housing, water and wastewater, broadband connectivity, community infrastructure, roads, bridges, and building projects for Indigenous communities.
-${govSourceInstruction}`,
-    },
-    {
-      name: "Economic Development (ISED, Regional Agencies)",
-      prompt: `Research all Indigenous-focused economic development grants and funding programs currently available from Innovation, Science and Economic Development Canada (ISED) and federal regional development agencies for 2025-2026.
-
-Search ONLY on these government websites:
-- ised-isde.gc.ca
-- canada.ca/en/innovation-science-economic-development
-- feddev-ontario.gc.ca
-- wd-deo.gc.ca
-- dec-ced.gc.ca
-
-Include programs for: Indigenous business development, entrepreneurship, innovation, technology, tourism, and economic diversification.
-${govSourceInstruction}`,
-    },
-    {
-      name: "Provincial Indigenous Programs",
-      prompt: `Research all Indigenous-focused grants and funding programs currently available from Canadian provincial and territorial governments for 2025-2026.
-
-Search ONLY on provincial government websites:
-- gov.bc.ca, alberta.ca, ontario.ca, quebec.ca, gov.mb.ca, gov.sk.ca
-- gov.ns.ca, gnb.ca, gov.nl.ca, gov.pe.ca, gov.nt.ca, gov.nu.ca, gov.yk.ca
-
-Include programs from all provinces and territories covering: Indigenous community development, business grants, housing, education, health, cultural programs, and reconciliation initiatives.
-${govSourceInstruction}`,
-    },
-    {
-      name: "Indigenous Organizations & Crown Corporations",
-      prompt: `Research all Indigenous-focused grants, scholarships, loans, and funding programs currently available from trusted Canadian Indigenous organizations, Crown corporations, and federal research councils for 2025-2026.
-
-Search ONLY on these trusted organization websites:
-- nacca.ca (National Aboriginal Capital Corporations Association)
-- fnfa.ca (First Nations Finance Authority)
-- fnha.ca (First Nations Health Authority)
-- indspire.ca (Indspire - Indigenous education awards and scholarships)
-- bdc.ca (Business Development Bank of Canada - Indigenous programs)
-- canadacouncil.ca (Canada Council for the Arts - Indigenous programs)
-- nrc-cnrc.gc.ca (National Research Council - IRAP)
-- sshrc-crsh.gc.ca, cihr-irsc.gc.ca, nserc-crsng.gc.ca (Research councils)
-- acoa-apeca.gc.ca, cannor.gc.ca, fednor.gc.ca (Regional development agencies)
-- ofifc.org, bcafn.ca (Provincial Indigenous organizations)
-
-Include: business loans, scholarships, education awards, research grants, arts funding, health programs, capacity building, and capital investment programs specifically for Indigenous communities, businesses, and individuals.
-${govSourceInstruction}`,
-    },
-  ];
-}
-
-// Legacy single prompt (kept for reference, no longer used)
-function buildPerplexityPrompt(): string {
-  return buildSearchCategories()[0].prompt;
+Be as thorough as possible. Find every active program across all sources.`;
 }
 
 // STEP 2: Build Claude comparison prompt (parses Perplexity report + compares with database)
@@ -390,27 +308,6 @@ async function callPerplexityDeepResearch(
   return content;
 }
 
-// Multi-step search: Run Perplexity for each category and merge results
-async function callPerplexityMultiStep(
-  apiKey: string
-): Promise<string> {
-  const categories = buildSearchCategories();
-  const reports: string[] = [];
-
-  for (const category of categories) {
-    console.log(`Researching category: ${category.name}...`);
-    try {
-      const report = await callPerplexityDeepResearch(category.prompt, apiKey);
-      reports.push(`\n=== ${category.name} ===\n${report}`);
-      console.log(`Category "${category.name}" complete (${report.length} chars)`);
-    } catch (error) {
-      console.error(`Category "${category.name}" failed:`, error);
-      reports.push(`\n=== ${category.name} ===\nResearch failed for this category.`);
-    }
-  }
-
-  return reports.join("\n\n");
-}
 
 // Call Claude Sonnet 4.5 via OpenRouter API (comparison and analysis)
 async function callClaudeComparison(
@@ -637,10 +534,10 @@ async function performResearch(
 
     console.log(`Fetched ${existingGrants?.length || 0} existing grants`);
 
-    // STEP 1: Multi-step Perplexity Deep Research (category-by-category)
-    console.log("STEP 1: Running multi-step Perplexity deep research across 5 categories...");
-    const perplexityReport = await callPerplexityMultiStep(openrouterApiKey);
-    console.log("STEP 1 complete: All category reports received");
+    // STEP 1: Single Perplexity Deep Research call (comprehensive)
+    console.log("STEP 1: Running Perplexity Deep Research...");
+    const perplexityReport = await callPerplexityDeepResearch(buildPerplexityPrompt(), openrouterApiKey);
+    console.log("STEP 1 complete: Perplexity report received");
 
     // STEP 2: Claude parses the merged report and compares with database
     console.log("STEP 2: Calling Claude Sonnet 4.5 for comparison...");
