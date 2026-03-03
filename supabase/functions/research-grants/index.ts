@@ -88,6 +88,49 @@ const PROVINCIAL_GOV_DOMAINS = [
   "gov.yk.ca",
 ];
 
+// Trusted Indigenous organizations and Crown corporations that administer government funding
+const TRUSTED_ORG_DOMAINS = [
+  // Indigenous National Organizations
+  "afn.ca",                 // Assembly of First Nations
+  "itk.ca",                 // Inuit Tapiriit Kanatami
+  "metisnation.ca",         // Métis National Council
+  // Indigenous Funding & Capital
+  "nacca.ca",               // National Aboriginal Capital Corporations Association
+  "fnfa.ca",                // First Nations Finance Authority
+  "fntc.ca",                // First Nations Tax Commission
+  "fnfmb.com",              // First Nations Financial Management Board
+  // Indigenous Health & Education
+  "fnha.ca",                // First Nations Health Authority (BC)
+  "indspire.ca",            // Indspire (Indigenous education awards)
+  "nafaforestry.org",       // National Aboriginal Forestry Association
+  // Crown Corporations & Federal Agencies
+  "bdc.ca",                 // Business Development Bank of Canada
+  "edc.ca",                 // Export Development Canada
+  "nrc-cnrc.gc.ca",         // National Research Council
+  "sshrc-crsh.gc.ca",       // Social Sciences & Humanities Research Council
+  "cihr-irsc.gc.ca",        // Canadian Institutes of Health Research
+  "nserc-crsng.gc.ca",      // Natural Sciences & Engineering Research Council
+  "cfc-swc.gc.ca",          // Women and Gender Equality Canada
+  "canadacouncil.ca",       // Canada Council for the Arts
+  "telefilm.ca",            // Telefilm Canada
+  "pch.gc.ca",              // Canadian Heritage
+  // Regional Development Agencies
+  "feddev-ontario.gc.ca",   // FedDev Ontario
+  "wd-deo.gc.ca",           // Western Economic Diversification
+  "dec-ced.gc.ca",          // Canada Economic Development for Quebec
+  "acoa-apeca.gc.ca",       // Atlantic Canada Opportunities Agency
+  "cannor.gc.ca",           // Canadian Northern Economic Development Agency
+  "fednor.gc.ca",           // Federal Economic Development Agency for Northern Ontario
+  "prairiescanecon.gc.ca",  // PrairiesCan
+  "pacificcan.gc.ca",       // PacifiCan
+  // Provincial Indigenous Agencies
+  "bchousing.org",          // BC Housing
+  "bcafn.ca",               // BC Assembly of First Nations
+  "onhwp.ca",               // Ontario Aboriginal Housing Services
+  "ofifc.org",              // Ontario Federation of Indigenous Friendship Centres
+  "edo.ca",                 // Economic Developers Council of Ontario (Indigenous programs)
+];
+
 // Category-specific search prompts for multi-step research
 interface SearchCategory {
   name: string;
@@ -97,12 +140,13 @@ interface SearchCategory {
 function buildSearchCategories(): SearchCategory[] {
   const govSourceInstruction = `
 CRITICAL SOURCE RESTRICTION:
-- ONLY search and cite official Canadian government websites ending in .gc.ca or provincial government domains.
-- Allowed federal domains: ${FEDERAL_GOV_DOMAINS.join(", ")}
-- Allowed provincial domains: ${PROVINCIAL_GOV_DOMAINS.join(", ")}
-- Do NOT include results from non-government websites, news articles, blogs, or third-party aggregators.
-- Only include grants where you can provide a direct government URL as the source.
-- If you cannot find a government URL for a grant, do NOT include it.
+- ONLY search and cite official Canadian government websites OR trusted Indigenous organizations and Crown corporations listed below.
+- Allowed federal government domains: ${FEDERAL_GOV_DOMAINS.join(", ")}
+- Allowed provincial government domains: ${PROVINCIAL_GOV_DOMAINS.join(", ")}
+- Allowed trusted Indigenous organizations & Crown corporations: ${TRUSTED_ORG_DOMAINS.join(", ")}
+- Do NOT include results from news articles, blogs, consulting firms, or third-party grant aggregator websites.
+- Only include grants where you can provide a direct URL from one of the allowed domains as the source.
+- If you cannot find a URL from an allowed domain for a grant, do NOT include it.
 
 For each grant/program you find, provide:
 - Full official name
@@ -111,7 +155,7 @@ For each grant/program you find, provide:
 - Who is eligible (be specific about Indigenous eligibility requirements)
 - Funding amount or range
 - Application deadline (or whether it is ongoing/rolling)
-- Where to apply (direct government URL only)
+- Where to apply (direct URL from an allowed domain only)
 - Province/territory or Federal
 - Program category`;
 
@@ -177,6 +221,25 @@ Search ONLY on provincial government websites:
 - gov.ns.ca, gnb.ca, gov.nl.ca, gov.pe.ca, gov.nt.ca, gov.nu.ca, gov.yk.ca
 
 Include programs from all provinces and territories covering: Indigenous community development, business grants, housing, education, health, cultural programs, and reconciliation initiatives.
+${govSourceInstruction}`,
+    },
+    {
+      name: "Indigenous Organizations & Crown Corporations",
+      prompt: `Research all Indigenous-focused grants, scholarships, loans, and funding programs currently available from trusted Canadian Indigenous organizations, Crown corporations, and federal research councils for 2025-2026.
+
+Search ONLY on these trusted organization websites:
+- nacca.ca (National Aboriginal Capital Corporations Association)
+- fnfa.ca (First Nations Finance Authority)
+- fnha.ca (First Nations Health Authority)
+- indspire.ca (Indspire - Indigenous education awards and scholarships)
+- bdc.ca (Business Development Bank of Canada - Indigenous programs)
+- canadacouncil.ca (Canada Council for the Arts - Indigenous programs)
+- nrc-cnrc.gc.ca (National Research Council - IRAP)
+- sshrc-crsh.gc.ca, cihr-irsc.gc.ca, nserc-crsng.gc.ca (Research councils)
+- acoa-apeca.gc.ca, cannor.gc.ca, fednor.gc.ca (Regional development agencies)
+- ofifc.org, bcafn.ca (Provincial Indigenous organizations)
+
+Include: business loans, scholarships, education awards, research grants, arts funding, health programs, capacity building, and capital investment programs specifically for Indigenous communities, businesses, and individuals.
 ${govSourceInstruction}`,
     },
   ];
@@ -277,9 +340,9 @@ IMPORTANT:
 - Only flag updates if you're confident the change is real
 - Provide detailed reasoning for all updates and deactivations
 - Return ONLY valid JSON, no markdown or explanatory text
-- CRITICAL: Only include grants that have a source URL from an official Canadian government website (.gc.ca or provincial government domain). Reject any grants sourced from non-government sites.
-- Every application_link and source_url MUST be a government website URL
-- CRITICAL: Each grant MUST have its own unique, specific source_url and application_link pointing to that specific grant's page. Do NOT reuse the same URL across multiple grants. Each source_url should be the exact government page where that particular grant is described.`;
+- CRITICAL: Only include grants that have a source URL from an official Canadian government website (.gc.ca or provincial government domain) OR a trusted Indigenous organization/Crown corporation. Reject any grants sourced from news sites, blogs, consulting firms, or third-party aggregators.
+- Every application_link and source_url MUST be from a government website or trusted organization
+- CRITICAL: Each grant MUST have its own unique, specific source_url and application_link pointing to that specific grant's page. Do NOT reuse the same URL across multiple grants. Each source_url should be the exact page where that particular grant is described.`;
 }
 
 // Call Perplexity Deep Research via OpenRouter - returns raw research report text
