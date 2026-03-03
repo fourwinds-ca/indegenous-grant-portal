@@ -278,7 +278,8 @@ IMPORTANT:
 - Provide detailed reasoning for all updates and deactivations
 - Return ONLY valid JSON, no markdown or explanatory text
 - CRITICAL: Only include grants that have a source URL from an official Canadian government website (.gc.ca or provincial government domain). Reject any grants sourced from non-government sites.
-- Every application_link and source_url MUST be a government website URL`;
+- Every application_link and source_url MUST be a government website URL
+- CRITICAL: Each grant MUST have its own unique, specific source_url and application_link pointing to that specific grant's page. Do NOT reuse the same URL across multiple grants. Each source_url should be the exact government page where that particular grant is described.`;
 }
 
 // Call Perplexity Deep Research via OpenRouter - returns raw research report text
@@ -459,7 +460,7 @@ async function processResearchResults(
       proposed_data: grant,
       ai_confidence_score: results.confidence_score,
       ai_reasoning: `New grant discovered during research`,
-      source_urls: results.sources,
+      source_urls: [grant.source_url, grant.application_link].filter(Boolean),
       research_run_id: runId,
     });
 
@@ -497,6 +498,10 @@ async function processResearchResults(
       continue;
     }
 
+    // Use the grant-specific source URLs, falling back to existing ones
+    const updateSourceUrl = update.updates.source_url || existing.source_url;
+    const updateAppLink = update.updates.application_link || existing.application_link;
+
     const { error } = await supabase.from("pending_grant_changes").insert({
       existing_grant_id: existing.id,
       change_type: "update",
@@ -504,7 +509,7 @@ async function processResearchResults(
       changed_fields: changedFields,
       ai_confidence_score: results.confidence_score,
       ai_reasoning: update.reason,
-      source_urls: results.sources,
+      source_urls: [updateSourceUrl, updateAppLink].filter(Boolean),
       research_run_id: runId,
     });
 
@@ -536,7 +541,7 @@ async function processResearchResults(
       proposed_data: { ...existing, status: "inactive" },
       ai_confidence_score: results.confidence_score,
       ai_reasoning: deactivation.reason,
-      source_urls: results.sources,
+      source_urls: [existing.source_url, existing.application_link].filter(Boolean),
       research_run_id: runId,
     });
 
