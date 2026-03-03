@@ -325,7 +325,7 @@ async function callClaudeComparison(
         "X-Title": "Four Winds Grant Portal",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4-5-20250514",
+        model: "anthropic/claude-sonnet-4.5",
         messages: [
           {
             role: "user",
