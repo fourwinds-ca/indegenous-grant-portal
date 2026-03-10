@@ -276,7 +276,7 @@ const AdminDashboard: React.FC = () => {
   const loadGrants = async () => {
     try {
       setLoading(true);
-      const data = await fetchGrants();
+      const data = await fetchGrants(true);
       setGrants(data);
     } catch (error) {
       console.error('Error loading grants:', error);

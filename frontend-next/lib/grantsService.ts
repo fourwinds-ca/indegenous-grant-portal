@@ -1,11 +1,20 @@
 import { supabase } from './supabase';
 import { Grant, GrantDB, grantFromDB, grantToDB } from './types';
 
-export async function fetchGrants(): Promise<Grant[]> {
-  const { data, error } = await supabase
+export async function fetchGrants(includeStale = false): Promise<Grant[]> {
+  let query = supabase
     .from('grants')
     .select('*')
     .order('deadline', { ascending: true });
+
+  if (!includeStale) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffDate = cutoff.toISOString().split('T')[0];
+    query = query.or(`deadline.is.null,deadline.gte.${cutoffDate}`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching grants:', error);

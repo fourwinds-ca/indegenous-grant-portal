@@ -6,7 +6,7 @@ Welcome to the Four Winds Indigenous Grant Portal! This guide will walk you thro
 
 ## What Is This?
 
-The Four Winds Grant Portal helps Indigenous communities across Canada discover and track government grants and funding programs. The portal uses AI to automatically find new grants from official government and trusted Indigenous organization websites, so you always have the most up-to-date information.
+The Four Winds Grant Portal helps Indigenous communities across Canada discover and track government grants and funding programs. The portal automatically searches official government and trusted Indigenous organization websites to keep the grant database current.
 
 ---
 
@@ -23,7 +23,7 @@ When you visit the portal, you'll see a list of all active grants available to I
 - **Category** — what the funding is for (housing, energy, education, etc.)
 - **Apply link** — takes you directly to the official government application page
 
-You can scroll through all available grants on the main page. Grants are sorted by upcoming deadlines so the most urgent ones appear first.
+Grants are sorted by upcoming deadlines so the most urgent ones appear first.
 
 ### Requesting Support
 
@@ -55,20 +55,20 @@ Once logged in, you'll see four tabs:
 
 This is your full list of grants in the system. From here you can:
 
-- View all active, inactive, and expired grants
+- View all grants including ones with past deadlines
 - Edit grant details (title, description, deadline, amount, etc.)
 - Manually add new grants
 - Remove grants that are no longer relevant
 
-#### 2. AI Research
+#### 2. Grant Research
 
-This is the AI-powered grant discovery tool. Here's how it works:
+This is the grant discovery tool. Here's how it works:
 
 **Running a Research Scan:**
 
 1. Click **"Run Research Now"**
-2. The system uses AI to search official government websites for all Indigenous grants currently available
-3. This takes about 3-5 minutes to complete
+2. The system searches official government websites for all Indigenous grants currently available
+3. This takes about 3–5 minutes to complete
 4. When done, you'll see **Pending Changes for Review**
 
 **Reviewing Pending Changes:**
@@ -76,8 +76,7 @@ This is the AI-powered grant discovery tool. Here's how it works:
 Each pending change shows:
 
 - **Change type** — New grant, Update to existing grant, or Deactivation
-- **Confidence score** — How confident the AI is about this finding
-- **Details** — What the AI found and why it's recommending the change
+- **Confidence score** — How confident the system is about this finding
 - **Source URL** — The official government page where the information was found
 
 For each pending change, you can:
@@ -86,15 +85,16 @@ For each pending change, you can:
 - Click the **green checkmark** to approve (adds/updates the grant in the database)
 - Click the **red X** to reject (discards the change)
 
-**What the AI Searches:**
+> If a grant shows an **"Unverified source"** warning, check the URL before approving — it may be from an unofficial website.
 
-The AI searches only trusted sources:
+**What the System Searches:**
 
-- Federal government websites (canada.ca, isc-sac.gc.ca, nrcan-rncan.gc.ca, cmhc-schl.gc.ca, etc.)
+Only trusted sources are used:
+
+- Federal government websites (canada.ca and all .gc.ca departments)
 - All 13 provincial and territorial government websites
 - Trusted Indigenous organizations (NACCA, Indspire, First Nations Health Authority, etc.)
-- Crown corporations (BDC, Canada Council for the Arts, etc.)
-- Federal research councils and regional development agencies
+- Crown corporations (BDC, CMHC, Canada Council for the Arts, etc.)
 
 See [Trusted-Grant-Providers.md](Trusted-Grant-Providers.md) for the complete list of approved sources.
 
@@ -124,9 +124,9 @@ Manage email subscribers who signed up for grant notifications. View subscriber 
 ### "I want to check if there are any new grants"
 
 1. Log in to the Admin Dashboard
-2. Go to the **AI Research** tab
+2. Go to the **Grant Research** tab
 3. Click **Run Research Now**
-4. Wait 3-5 minutes for the scan to complete
+4. Wait 3–5 minutes for the scan to complete
 5. Review the Pending Changes — approve the ones that look correct
 
 ### "I want to add a grant manually"
@@ -155,30 +155,28 @@ Manage email subscribers who signed up for grant notifications. View subscriber 
 
 ---
 
-## How the AI Grant Research Works (Non-Technical)
+## How Grant Research Works
 
-Think of the AI research as a very thorough research assistant. When you click "Run Research Now," here's what happens behind the scenes:
+When you click "Run Research Now," here's what happens:
 
-1. **Search Phase** — An AI called Perplexity does a deep search across all Canadian government websites and trusted Indigenous organizations. It reads through hundreds of pages looking for every grant program available to Indigenous communities.
+1. **Search** — The system does a deep search across all Canadian government websites and trusted Indigenous organizations, reading through funding pages to find every grant program available to Indigenous communities.
 
-2. **Analysis Phase** — A second AI called Claude takes the search results and compares them against what's already in your database. It figures out:
-   - Which grants are brand new (not in your system yet)
-   - Which grants have changed (new deadline, different amount, etc.)
-   - Which grants may have expired or been discontinued
+2. **Analysis** — The results are compared against what's already in your database to identify:
+   - Grants that are brand new (not in your system yet)
+   - Grants that have changed (new deadline, different amount, etc.)
+   - Grants that may have expired or been discontinued
 
-3. **Review Phase** — All findings are presented to you as "Pending Changes." Nothing gets added or changed automatically — you always have the final say. Review each suggestion, and approve or reject it.
-
-This process ensures the portal stays current while keeping a human in the loop for quality control.
+3. **Review** — All findings are presented as "Pending Changes." Nothing gets added or changed automatically — you always have the final say. Review each suggestion and approve or reject it.
 
 ---
 
 ## Frequently Asked Questions
 
-**Q: How often should I run the AI research?**
+**Q: How often should I run a research scan?**
 A: Once a week is a good cadence. Government grant programs don't change daily, but weekly checks ensure you catch new announcements and deadline changes promptly.
 
-**Q: Can the AI make mistakes?**
-A: Yes, occasionally. That's why every change goes through admin review. The AI provides a confidence score and reasoning for each suggestion — use your judgment to approve or reject.
+**Q: Can the system make mistakes?**
+A: Yes, occasionally. That's why every change goes through admin review. Use the confidence score and source URL to guide your decision on whether to approve or reject.
 
 **Q: What if I accidentally approve a wrong change?**
 A: You can always edit or remove grants from the Grants Database tab. No change is permanent.
@@ -187,10 +185,7 @@ A: You can always edit or remove grants from the Grants Database tab. No change 
 A: Only users whose email is in the admin list. Contact the system administrator to add new admins.
 
 **Q: Is the data only from government sources?**
-A: Yes. The AI is restricted to searching only official Canadian government websites and a curated list of trusted Indigenous organizations. It will not pull data from news articles, blogs, or third-party websites.
-
-**Q: How much does the AI research cost to run?**
-A: Each research run costs approximately $0.10-0.30 in AI usage fees through OpenRouter. Running weekly costs roughly $2-5 per month.
+A: Yes. The system is restricted to official Canadian government websites and a curated list of trusted Indigenous organizations. It will not pull data from news articles, blogs, or third-party websites.
 
 ---
 
@@ -198,4 +193,3 @@ A: Each research run costs approximately $0.10-0.30 in AI usage fees through Ope
 
 - **Portal issues**: Use the Request Support form on the website
 - **Admin access**: Contact the system administrator
-- **Technical issues**: Open an issue at the project's GitHub repository

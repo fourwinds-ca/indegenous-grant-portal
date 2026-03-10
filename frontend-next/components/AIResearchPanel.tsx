@@ -28,6 +28,34 @@ import {
   triggerManualResearch,
 } from '@/lib/pendingChangesService';
 
+const TRUSTED_DOMAINS = [
+  // Federal government
+  'canada.ca', 'gc.ca', 'isc-sac.gc.ca', 'sac-isc.gc.ca', 'rcaanc-cirnac.gc.ca',
+  'nrcan-rncan.gc.ca', 'ec.gc.ca', 'cmhc-schl.gc.ca', 'ised-isde.gc.ca',
+  'infrastructure.gc.ca', 'pch.gc.ca', 'cannor.gc.ca', 'feddevontario.gc.ca',
+  'prairies.gc.ca', 'pacific.gc.ca', 'acoa-apeca.gc.ca', 'canada-atlantic.gc.ca',
+  // Provincial & territorial
+  'gov.bc.ca', 'alberta.ca', 'gov.sk.ca', 'gov.mb.ca', 'ontario.ca', 'quebec.ca',
+  'gnb.ca', 'gov.ns.ca', 'gov.pe.ca', 'gov.nl.ca', 'gov.nt.ca', 'gov.nu.ca', 'gov.yk.ca',
+  // Indigenous national organizations
+  'afn.ca', 'itk.ca', 'metisnation.ca', 'nacca.ca', 'fnmhf.ca', 'coastfunds.ca',
+  // Indigenous financial institutions & development orgs
+  'bdc.ca', 'futurpreneur.ca', 'ccib.ca', 'canadacouncil.ca', 'apeetogosan.com',
+  'clarencecampeau.com', 'smedco.ca', 'gdins.org', 'antco.ca', 'nadf.org',
+  'mvdf.ca', 'lrcc.mb.ca', 'cedf.mb.ca', 'firstpeoplesfund.ca', 'fnha.ca',
+  'newrelationshiptrust.ca', 'canadabusiness.ca', 'kakivak.ca',
+];
+
+function isUrlTrusted(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return TRUSTED_DOMAINS.some(domain => hostname === domain || hostname.endsWith('.' + domain));
+  } catch {
+    return false;
+  }
+}
+
+
 interface AIResearchPanelProps {
   adminEmail: string;
   onChangeApplied: () => void;
@@ -335,6 +363,17 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
                     <p className="text-sm text-gray-500 truncate">
                       {(change.proposed_data as Record<string, unknown>).agency as string}
                     </p>
+                    {(() => {
+                      const link = (change.proposed_data as Record<string, unknown>).application_link as string;
+                      if (link && !isUrlTrusted(link)) {
+                        return (
+                          <p className="mt-1 text-xs text-amber-600 flex items-center gap-1">
+                            <FaExclamationTriangle className="shrink-0" />
+                            Unverified source — confirm URL before approving
+                          </p>
+                        );
+                      }
+                    })()}
                     {change.change_type === 'update' && change.changed_fields && (
                       <div className="mt-2 text-xs text-gray-500">
                         <span className="font-medium">Changed:</span>{' '}
