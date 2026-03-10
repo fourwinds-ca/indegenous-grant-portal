@@ -44,6 +44,14 @@ const TRUSTED_DOMAINS = [
   'clarencecampeau.com', 'smedco.ca', 'gdins.org', 'antco.ca', 'nadf.org',
   'mvdf.ca', 'lrcc.mb.ca', 'cedf.mb.ca', 'firstpeoplesfund.ca', 'fnha.ca',
   'newrelationshiptrust.ca', 'canadabusiness.ca', 'kakivak.ca',
+  // Infrastructure & international
+  'cib.ca', 'un.org', 'undp.org', 'unfoundation.org',
+  // Quebec arts & culture
+  'calq.gouv.qc.ca', 'sodec.gouv.qc.ca',
+  // Additional federal
+  'publicsafety.gc.ca', 'justice.gc.ca', 'phac-aspc.gc.ca',
+  'nutritionnorthcanada.gc.ca', 'sshrc-crsh.gc.ca', 'cihr-irsc.gc.ca',
+  'telefilm.ca', 'fcc-fac.ca',
 ];
 
 function isUrlTrusted(url: string): boolean {

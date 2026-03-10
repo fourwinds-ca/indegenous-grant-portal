@@ -84,6 +84,7 @@ To add a new trusted source, update this list **and** the corresponding arrays i
 | `edc.ca` | Export Development Canada | Export financing for Indigenous businesses |
 | `canadacouncil.ca` | Canada Council for the Arts | Arts grants including Indigenous arts programs |
 | `telefilm.ca` | Telefilm Canada | Film, TV, and digital media funding including Indigenous streams |
+| `cib.ca` | Canada Infrastructure Bank | Equity and debt financing for Indigenous community infrastructure projects |
 
 ---
 
@@ -110,6 +111,15 @@ To add a new trusted source, update this list **and** the corresponding arrays i
 | `dec-ced.gc.ca` | Canada Economic Development for Quebec | Quebec |
 | `acoa-apeca.gc.ca` | Atlantic Canada Opportunities Agency | Atlantic provinces |
 | `cannor.gc.ca` | CanNor | Northern Canada (Yukon, NWT, Nunavut) |
+
+---
+
+## International Organizations
+
+| Domain | Organization | What They Fund |
+|--------|-------------|----------------|
+| `un.org` | United Nations | Indigenous Peoples funding, UNPFII programs, global Indigenous grants |
+| `undp.org` | UN Development Programme | Development grants including Indigenous community programs |
 
 ---
 
