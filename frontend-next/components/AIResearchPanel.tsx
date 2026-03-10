@@ -219,7 +219,7 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
               <FaRobot className="text-2xl text-purple-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-purple-900">AI Grant Research</h2>
+              <h2 className="text-xl font-bold text-purple-900">Grant Research</h2>
               <p className="text-sm text-purple-600">
                 Perplexity Deep Research automatically discovers new Indigenous grants
               </p>
