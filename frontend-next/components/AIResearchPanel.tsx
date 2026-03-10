@@ -295,26 +295,32 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
         </div>
 
         {/* Stats */}
-        {latestRun && latestRun.status === 'completed' && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-purple-600">{latestRun.grants_analyzed}</p>
-              <p className="text-xs text-gray-600">Grants Analyzed</p>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-green-600">{latestRun.new_grants_found}</p>
-              <p className="text-xs text-gray-600">New Found</p>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-blue-600">{latestRun.updates_found}</p>
-              <p className="text-xs text-gray-600">Updates</p>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-red-600">{latestRun.deactivations_found}</p>
-              <p className="text-xs text-gray-600">Deactivations</p>
-            </div>
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white/60 rounded-lg p-3 text-center">
+            <p className="text-2xl font-bold text-orange-600">{pendingChanges.length}</p>
+            <p className="text-xs text-gray-600">Pending Approval</p>
           </div>
-        )}
+          {latestRun && latestRun.status === 'completed' ? (
+            <>
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-green-600">{latestRun.new_grants_found}</p>
+                <p className="text-xs text-gray-600">Found (Last Run)</p>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-blue-600">{latestRun.updates_found}</p>
+                <p className="text-xs text-gray-600">Updates (Last Run)</p>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-red-600">{latestRun.deactivations_found}</p>
+                <p className="text-xs text-gray-600">Deactivations (Last Run)</p>
+              </div>
+            </>
+          ) : (
+            <div className="bg-white/60 rounded-lg p-3 text-center col-span-3">
+              <p className="text-sm text-gray-500">No research runs yet</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Pending Changes */}

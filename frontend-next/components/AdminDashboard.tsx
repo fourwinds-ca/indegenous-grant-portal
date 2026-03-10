@@ -874,7 +874,7 @@ const AdminDashboard: React.FC = () => {
             }`}
           >
             <FaRobot />
-            AI Research
+            Grant Research
           </button>
           <button
             onClick={() => setActiveTab('contacts')}
