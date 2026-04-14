@@ -22,6 +22,9 @@ To add a new trusted source, update this list **and** the corresponding arrays i
 | `infrastructure.gc.ca` | Infrastructure Canada |
 | `pch.gc.ca` | Canadian Heritage |
 | `cfc-swc.gc.ca` | Women and Gender Equality Canada |
+| `publicsafety.gc.ca` | Public Safety Canada |
+| `justice.gc.ca` | Department of Justice Canada |
+| `nutritionnorthcanada.gc.ca` | Nutrition North Canada |
 
 ---
 
@@ -84,6 +87,23 @@ To add a new trusted source, update this list **and** the corresponding arrays i
 | `edc.ca` | Export Development Canada | Export financing for Indigenous businesses |
 | `canadacouncil.ca` | Canada Council for the Arts | Arts grants including Indigenous arts programs |
 | `telefilm.ca` | Telefilm Canada | Film, TV, and digital media funding including Indigenous streams |
+| `fcc-fac.ca` | Farm Credit Canada | Agricultural lending including Indigenous farming programs |
+
+---
+
+## Research & Funding Portals
+
+| Domain | Organization | What They Fund |
+|--------|-------------|----------------|
+| `researchnet-recherchenet.ca` | ResearchNet (Tri-council portal) | Central portal for CIHR, SSHRC, NSERC grant applications |
+
+---
+
+## Provincial Specialized Agencies
+
+| Domain | Organization | What They Fund |
+|--------|-------------|----------------|
+| `calq.gouv.qc.ca` | Conseil des arts et des lettres du Québec (CALQ) | Arts grants including Indigenous artist programs in Quebec |
 
 ---
 
@@ -125,16 +145,23 @@ To add a new trusted source, update this list **and** the corresponding arrays i
 
 ---
 
-## Search Categories
+## Research Pipeline
 
-The AI research pipeline runs **6 category-specific searches**:
+The AI research pipeline runs a **5-step process**:
 
-1. **Federal Indigenous Programs** — ISC, CIRNAC
-2. **Energy & Environment** — NRCan, ECCC
-3. **Housing & Infrastructure** — CMHC, Infrastructure Canada
-4. **Economic Development** — ISED, Regional Development Agencies
-5. **Provincial Programs** — All 13 provincial/territorial governments
-6. **Indigenous Organizations & Crown Corporations** — NACCA, Indspire, BDC, research councils, etc.
+1. **Perplexity Deep Research** — Comprehensive web search across all trusted domains to discover grants
+2. **Claude Comparison** — Parses the research report, compares with the existing database, applies quality filters (must have application process, correct title, separate funding streams)
+3. **URL Validation & Page Verification** — Checks every new grant's links (404/403/redirect detection) and verifies that the grant title actually appears on the source page (anti-hallucination)
+4. **Perplexity Spot-Check** — Grants flagged with issues in step 3 get re-verified with a quick Perplexity web search to confirm whether the grant exists, has the right name, and is currently open
+5. **Save & Flag** — Validated grants are saved as pending changes for admin review. Grants with broken links or unverified titles are auto-flagged for rejection.
+
+### Grant Statuses
+
+| Status | Meaning |
+|--------|---------|
+| `active` | Application window is currently open |
+| `recurring_closed` | Legitimate recurring program, current window closed, will reopen |
+| `inactive` | Permanently closed or discontinued |
 
 ---
 
@@ -143,7 +170,7 @@ The AI research pipeline runs **6 category-specific searches**:
 1. Add the domain to the appropriate array in `supabase/functions/research-grants/index.ts`:
    - `FEDERAL_GOV_DOMAINS` for federal government
    - `PROVINCIAL_GOV_DOMAINS` for provincial/territorial government
-   - `TRUSTED_ORG_DOMAINS` for Indigenous orgs and Crown corporations
-2. If the new provider warrants its own search category, add it to `buildSearchCategories()`
+   - `TRUSTED_ORG_DOMAINS` for Indigenous orgs, Crown corporations, research portals, and provincial specialized agencies
+2. Update `buildPerplexityPrompt()` to mention the new provider in the relevant search category
 3. Update this document with the new domain, organization name, and what they fund
 4. Deploy the updated edge function: `npx supabase functions deploy research-grants --project-ref bjjoiwnhqtizqryragco`

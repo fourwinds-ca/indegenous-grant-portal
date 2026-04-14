@@ -24,6 +24,8 @@ import {
   FaToggleOn,
   FaToggleOff,
   FaPaperPlane,
+  FaBook,
+  FaFilePdf,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import AIResearchPanel from './AIResearchPanel';
@@ -95,7 +97,7 @@ const AdminDashboard: React.FC = () => {
   const [provinceFilter, setProvinceFilter] = useState('All');
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research' | 'contacts' | 'subscriptions'>('grants');
+  const [activeTab, setActiveTab] = useState<'grants' | 'ai-research' | 'contacts' | 'subscriptions' | 'training'>('grants');
 
   // Subscriptions state
   const [subscriptions, setSubscriptions] = useState<EmailSubscription[]>([]);
@@ -906,6 +908,17 @@ const AdminDashboard: React.FC = () => {
               {subscriptionStats.active}
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab('training')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+              activeTab === 'training'
+                ? 'bg-white text-green-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <FaBook />
+            Training
+          </button>
         </div>
 
         {/* AI Research Tab */}
@@ -1152,6 +1165,120 @@ const AdminDashboard: React.FC = () => {
               )}
             </div>
           </>
+        )}
+
+        {/* Training Tab */}
+        {activeTab === 'training' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-100 rounded-full">
+                  <FaBook className="text-2xl text-green-700" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-green-900">Training Documentation</h2>
+                  <p className="text-sm text-green-700">
+                    Branded PDF guides for admins and for Indigenous communities using the portal
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Admin Training Guide */}
+              <div className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-teal-500">
+                <div className="p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-3 bg-teal-100 rounded-lg flex-shrink-0">
+                      <FaFilePdf className="text-3xl text-teal-700" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">Admin Training Guide</h3>
+                      <p className="text-sm text-gray-500 mb-2">For portal administrators</p>
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium bg-teal-100 text-teal-800 rounded-full">
+                        7 pages &bull; ~48 KB
+                      </span>
+                    </div>
+                  </div>
+                  <ul className="text-sm text-gray-700 space-y-1 mb-5 list-disc list-inside">
+                    <li>Dashboard layout and tab walkthrough</li>
+                    <li>5-step AI research pipeline explained</li>
+                    <li>Reviewing and approving pending changes</li>
+                    <li>Common tasks: adding grants, responding to support</li>
+                    <li>Trusted sources and FAQ</li>
+                  </ul>
+                  <div className="flex gap-2">
+                    <a
+                      href="/training/Admin-Training-Guide.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-medium text-sm"
+                    >
+                      <FaEye />
+                      View in Browser
+                    </a>
+                    <a
+                      href="/training/Admin-Training-Guide.pdf"
+                      download
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-teal-600 text-teal-700 rounded-md hover:bg-teal-50 font-medium text-sm"
+                    >
+                      <FaDownload />
+                      Download
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Quick Start Guide */}
+              <div className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-green-500">
+                <div className="p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-3 bg-green-100 rounded-lg flex-shrink-0">
+                      <FaFilePdf className="text-3xl text-green-700" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">User Quick Start Guide</h3>
+                      <p className="text-sm text-gray-500 mb-2">For Indigenous communities</p>
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                        3 pages &bull; ~41 KB
+                      </span>
+                    </div>
+                  </div>
+                  <ul className="text-sm text-gray-700 space-y-1 mb-5 list-disc list-inside">
+                    <li>How to browse available grants</li>
+                    <li>Understanding grant cards (amount, deadline, category)</li>
+                    <li>Finding the right grant for your community</li>
+                    <li>Grant status meanings (active, recurring, closed)</li>
+                    <li>Subscribing to notifications and getting help</li>
+                  </ul>
+                  <div className="flex gap-2">
+                    <a
+                      href="/training/User-Quick-Start-Guide.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+                    >
+                      <FaEye />
+                      View in Browser
+                    </a>
+                    <a
+                      href="/training/User-Quick-Start-Guide.pdf"
+                      download
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50 font-medium text-sm"
+                    >
+                      <FaDownload />
+                      Download
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
+              <strong>Share with your community:</strong> The User Quick Start Guide is designed to be shared with community members.
+              Download and email it, print copies, or link to it directly: <code className="bg-white px-1.5 py-0.5 rounded text-xs">/training/User-Quick-Start-Guide.pdf</code>
+            </div>
+          </div>
         )}
 
         {/* Grants Tab */}

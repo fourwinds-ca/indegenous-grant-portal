@@ -15,6 +15,15 @@ import {
   FaPlus,
   FaEdit,
   FaBan,
+  FaSearch,
+  FaBalanceScale,
+  FaLink,
+  FaShieldAlt,
+  FaClipboardCheck,
+  FaInfoCircle,
+  FaRedo,
+  FaChevronDown,
+  FaChevronUp,
 } from 'react-icons/fa';
 import {
   PendingGrantChange,
@@ -45,6 +54,7 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
   const [rejectionNotes, setRejectionNotes] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showWorkflow, setShowWorkflow] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -161,6 +171,8 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
         return <FaEdit className="text-blue-600" />;
       case 'deactivate':
         return <FaBan className="text-red-600" />;
+      case 'reclassify':
+        return <FaRedo className="text-amber-600" />;
       default:
         return null;
     }
@@ -174,8 +186,20 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
         return 'bg-blue-100 text-blue-800';
       case 'deactivate':
         return 'bg-red-100 text-red-800';
+      case 'reclassify':
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getChangeTypeLabel = (type: string) => {
+    switch (type) {
+      case 'new': return 'New Grant';
+      case 'update': return 'Update';
+      case 'deactivate': return 'Deactivate';
+      case 'reclassify': return 'Reclassify (recurring)';
+      default: return type;
     }
   };
 
@@ -221,8 +245,16 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
             <div>
               <h2 className="text-xl font-bold text-purple-900">AI Grant Research</h2>
               <p className="text-sm text-purple-600">
-                Perplexity Deep Research automatically discovers new Indigenous grants
+                5-step validated pipeline — Discovery, Comparison, Validation, Verification, Review
               </p>
+              <button
+                onClick={() => setShowWorkflow(!showWorkflow)}
+                className="text-xs text-purple-700 hover:text-purple-900 underline mt-1 inline-flex items-center gap-1"
+              >
+                <FaInfoCircle />
+                {showWorkflow ? 'Hide workflow details' : 'How does the workflow work?'}
+                {showWorkflow ? <FaChevronUp className="text-xs" /> : <FaChevronDown className="text-xs" />}
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -258,26 +290,97 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
           </div>
         </div>
 
-        {/* Stats */}
-        {latestRun && latestRun.status === 'completed' && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-purple-600">{latestRun.grants_analyzed}</p>
-              <p className="text-xs text-gray-600">Grants Analyzed</p>
+        {/* Workflow Explainer (collapsible) */}
+        {showWorkflow && (
+          <div className="mt-5 bg-white/80 rounded-lg p-5 border border-purple-100">
+            <h3 className="font-semibold text-purple-900 mb-3 text-sm">How the 5-Step Research Pipeline Works</h3>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              {[
+                { n: 1, icon: FaSearch, title: 'Discovery', desc: 'Perplexity searches trusted government and Indigenous org websites for all active grants.', color: 'purple' },
+                { n: 2, icon: FaBalanceScale, title: 'Comparison', desc: 'Claude compares findings with your database and applies quality filters.', color: 'indigo' },
+                { n: 3, icon: FaLink, title: 'URL Validation', desc: 'Every link is checked for 404/403/redirect-to-homepage issues.', color: 'blue' },
+                { n: 4, icon: FaShieldAlt, title: 'Verification', desc: 'Flagged grants get a spot-check to confirm they exist and titles match.', color: 'teal' },
+                { n: 5, icon: FaClipboardCheck, title: 'Review', desc: 'Validated results saved as Pending Changes for your approval.', color: 'green' },
+              ].map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.n} className="relative">
+                    <div className="bg-white rounded-lg p-3 border border-gray-200 h-full">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-7 h-7 rounded-full bg-${step.color}-100 text-${step.color}-700 flex items-center justify-center text-xs font-bold`}>
+                          {step.n}
+                        </div>
+                        <Icon className={`text-${step.color}-600`} />
+                        <span className="text-sm font-semibold text-gray-800">{step.title}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-snug">{step.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-green-600">{latestRun.new_grants_found}</p>
-              <p className="text-xs text-gray-600">New Found</p>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-blue-600">{latestRun.updates_found}</p>
-              <p className="text-xs text-gray-600">Updates</p>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-red-600">{latestRun.deactivations_found}</p>
-              <p className="text-xs text-gray-600">Deactivations</p>
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900">
+              <strong>What changed:</strong> Previously the pipeline returned raw Perplexity results directly. Now every grant is link-checked, title-verified against the source page, and flagged grants get a second Perplexity spot-check. Grants with broken links or unverified titles are auto-flagged — review the validation badges carefully before approving.
             </div>
           </div>
+        )}
+
+        {/* Stats */}
+        {latestRun && latestRun.status === 'completed' && (
+          <>
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-purple-600">{latestRun.grants_analyzed}</p>
+                <p className="text-xs text-gray-600">Grants Analyzed</p>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-green-600">{latestRun.new_grants_found}</p>
+                <p className="text-xs text-gray-600">New Found</p>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-blue-600">{latestRun.updates_found}</p>
+                <p className="text-xs text-gray-600">Updates</p>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-red-600">{latestRun.deactivations_found}</p>
+                <p className="text-xs text-gray-600">Deactivations</p>
+              </div>
+            </div>
+
+            {/* Validation summary (new in 5-step pipeline) */}
+            {latestRun.raw_response?.validation_summary && (
+              <div className="mt-3 p-3 bg-white/70 rounded-lg border border-purple-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <FaShieldAlt className="text-purple-600" />
+                  <span className="text-sm font-semibold text-purple-900">Validation Results</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                  <div className="flex items-center justify-between bg-green-50 px-2 py-1 rounded">
+                    <span className="text-gray-700">Passed</span>
+                    <span className="font-bold text-green-700">{latestRun.raw_response.validation_summary.passed}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-red-50 px-2 py-1 rounded">
+                    <span className="text-gray-700">Broken links</span>
+                    <span className="font-bold text-red-700">{latestRun.raw_response.validation_summary.broken_links}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-amber-50 px-2 py-1 rounded">
+                    <span className="text-gray-700">Title not found</span>
+                    <span className="font-bold text-amber-700">{latestRun.raw_response.validation_summary.title_not_found}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-orange-50 px-2 py-1 rounded">
+                    <span className="text-gray-700">Redirected</span>
+                    <span className="font-bold text-orange-700">{latestRun.raw_response.validation_summary.redirected}</span>
+                  </div>
+                  {latestRun.raw_response.rejected_count !== undefined && (
+                    <div className="flex items-center justify-between bg-gray-100 px-2 py-1 rounded">
+                      <span className="text-gray-700">Auto-flagged</span>
+                      <span className="font-bold text-gray-700">{latestRun.raw_response.rejected_count}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -314,18 +417,36 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {pendingChanges.map((change) => (
-              <div key={change.id} className="p-4 hover:bg-gray-50">
+            {pendingChanges.map((change) => {
+              const hasValidationIssues = change.validation_issues && change.validation_issues.length > 0;
+              const isAutoRejected = (change.proposed_data as Record<string, unknown>)._auto_rejected === true;
+              return (
+              <div
+                key={change.id}
+                className={`p-4 hover:bg-gray-50 ${hasValidationIssues ? 'border-l-4 border-amber-400 bg-amber-50/30' : ''}`}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       {getChangeTypeIcon(change.change_type)}
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getChangeTypeBadge(change.change_type)}`}>
-                        {change.change_type === 'new' ? 'New Grant' : change.change_type === 'update' ? 'Update' : 'Deactivate'}
+                        {getChangeTypeLabel(change.change_type)}
                       </span>
                       {change.ai_confidence_score && (
                         <span className="text-xs text-gray-500">
                           {Math.round(change.ai_confidence_score * 100)}% confidence
+                        </span>
+                      )}
+                      {isAutoRejected && (
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800 flex items-center gap-1">
+                          <FaExclamationTriangle className="text-xs" />
+                          Auto-flagged
+                        </span>
+                      )}
+                      {hasValidationIssues && !isAutoRejected && (
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 flex items-center gap-1">
+                          <FaExclamationTriangle className="text-xs" />
+                          {change.validation_issues!.length} validation issue{change.validation_issues!.length > 1 ? 's' : ''}
                         </span>
                       )}
                     </div>
@@ -378,8 +499,25 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
                     </button>
                   </div>
                 </div>
+                {hasValidationIssues && (
+                  <div className="mt-2 ml-1 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                    <div className="font-semibold mb-1 flex items-center gap-1">
+                      <FaExclamationTriangle />
+                      Validation issues detected:
+                    </div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {change.validation_issues!.slice(0, 3).map((issue, i) => (
+                        <li key={i} className="break-all">{issue}</li>
+                      ))}
+                      {change.validation_issues!.length > 3 && (
+                        <li className="italic">+ {change.validation_issues!.length - 3} more — see details</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -476,6 +614,7 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
                   <h2 className="text-xl font-bold text-gray-900">
                     {selectedChange.change_type === 'new' ? 'New Grant Discovered' :
                      selectedChange.change_type === 'update' ? 'Grant Update Detected' :
+                     selectedChange.change_type === 'reclassify' ? 'Grant Reclassification (recurring)' :
                      'Grant Deactivation'}
                   </h2>
                 </div>
@@ -573,6 +712,24 @@ const AIResearchPanel: React.FC<AIResearchPanelProps> = ({ adminEmail, onChangeA
                       Confidence: {Math.round(selectedChange.ai_confidence_score * 100)}%
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Validation Issues (from 5-step pipeline) */}
+              {selectedChange.validation_issues && selectedChange.validation_issues.length > 0 && (
+                <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                    <FaExclamationTriangle />
+                    Validation Issues
+                  </h4>
+                  <p className="text-xs text-amber-800 mb-2">
+                    The automated pipeline detected the following issues during URL validation and page verification. Review carefully before approving.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-amber-900">
+                    {selectedChange.validation_issues.map((issue, i) => (
+                      <li key={i} className="break-all">{issue}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

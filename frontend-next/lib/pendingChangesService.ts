@@ -3,12 +3,13 @@ import { supabase } from './supabase';
 export interface PendingGrantChange {
   id: string;
   existing_grant_id: string | null;
-  change_type: 'new' | 'update' | 'deactivate';
+  change_type: 'new' | 'update' | 'deactivate' | 'reclassify';
   proposed_data: Record<string, unknown>;
   changed_fields: Record<string, { old: unknown; new: unknown }> | null;
   ai_confidence_score: number | null;
   ai_reasoning: string | null;
   source_urls: string[] | null;
+  validation_issues: string[] | null;
   research_run_id: string | null;
   status: 'pending' | 'approved' | 'rejected';
   reviewed_by: string | null;
@@ -17,6 +18,14 @@ export interface PendingGrantChange {
   rejection_notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ValidationSummary {
+  total: number;
+  passed: number;
+  broken_links: number;
+  title_not_found: number;
+  redirected: number;
 }
 
 export interface ResearchRun {
@@ -30,6 +39,12 @@ export interface ResearchRun {
   deactivations_found: number;
   error_message: string | null;
   triggered_by: 'cron' | 'manual';
+  raw_response: {
+    validation_summary?: ValidationSummary;
+    verification_report?: string | null;
+    rejected_count?: number;
+    recurring_closed_count?: number;
+  } | null;
 }
 
 export async function fetchPendingChanges(): Promise<PendingGrantChange[]> {
