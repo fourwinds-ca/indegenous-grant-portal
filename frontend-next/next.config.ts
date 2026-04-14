@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
     unoptimized: false,
     remotePatterns: [],
   },
+  outputFileTracingIncludes: {
+    '/api/training/[file]': ['./data/training/**/*'],
+  },
 };
 
 export default nextConfig;

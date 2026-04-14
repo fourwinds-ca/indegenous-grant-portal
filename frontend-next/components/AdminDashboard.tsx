@@ -28,6 +28,7 @@ import {
   FaFilePdf,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import AIResearchPanel from './AIResearchPanel';
 import { Grant, PROVINCES, GRANT_CATEGORIES, GRANT_STATUSES } from '@/lib/types';
 import {
@@ -98,6 +99,45 @@ const AdminDashboard: React.FC = () => {
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'grants' | 'ai-research' | 'contacts' | 'subscriptions' | 'training'>('grants');
+  const [trainingError, setTrainingError] = useState('');
+  const [trainingLoading, setTrainingLoading] = useState<string | null>(null);
+
+  const openTrainingPdf = async (key: 'admin' | 'user', mode: 'view' | 'download') => {
+    setTrainingError('');
+    setTrainingLoading(`${key}-${mode}`);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setTrainingError('Your session expired. Please log in again.');
+        return;
+      }
+      const res = await fetch(`/api/training/${key}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: 'Unknown error' }));
+        setTrainingError(body.error || `Request failed (${res.status})`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const filename = key === 'admin' ? 'Admin-Training-Guide.pdf' : 'User-Quick-Start-Guide.pdf';
+      if (mode === 'download') {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+      } else {
+        window.open(url, '_blank');
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      console.error('Training PDF fetch failed:', err);
+      setTrainingError('Failed to load training document.');
+    } finally {
+      setTrainingLoading(null);
+    }
+  };
 
   // Subscriptions state
   const [subscriptions, setSubscriptions] = useState<EmailSubscription[]>([]);
@@ -1208,23 +1248,22 @@ const AdminDashboard: React.FC = () => {
                     <li>Trusted sources and FAQ</li>
                   </ul>
                   <div className="flex gap-2">
-                    <a
-                      href="/training/Admin-Training-Guide.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-medium text-sm"
+                    <button
+                      onClick={() => openTrainingPdf('admin', 'view')}
+                      disabled={trainingLoading === 'admin-view'}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-medium text-sm disabled:opacity-50"
                     >
-                      <FaEye />
+                      {trainingLoading === 'admin-view' ? <FaSpinner className="animate-spin" /> : <FaEye />}
                       View in Browser
-                    </a>
-                    <a
-                      href="/training/Admin-Training-Guide.pdf"
-                      download
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-teal-600 text-teal-700 rounded-md hover:bg-teal-50 font-medium text-sm"
+                    </button>
+                    <button
+                      onClick={() => openTrainingPdf('admin', 'download')}
+                      disabled={trainingLoading === 'admin-download'}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-teal-600 text-teal-700 rounded-md hover:bg-teal-50 font-medium text-sm disabled:opacity-50"
                     >
-                      <FaDownload />
+                      {trainingLoading === 'admin-download' ? <FaSpinner className="animate-spin" /> : <FaDownload />}
                       Download
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1252,31 +1291,38 @@ const AdminDashboard: React.FC = () => {
                     <li>Subscribing to notifications and getting help</li>
                   </ul>
                   <div className="flex gap-2">
-                    <a
-                      href="/training/User-Quick-Start-Guide.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+                    <button
+                      onClick={() => openTrainingPdf('user', 'view')}
+                      disabled={trainingLoading === 'user-view'}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm disabled:opacity-50"
                     >
-                      <FaEye />
+                      {trainingLoading === 'user-view' ? <FaSpinner className="animate-spin" /> : <FaEye />}
                       View in Browser
-                    </a>
-                    <a
-                      href="/training/User-Quick-Start-Guide.pdf"
-                      download
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50 font-medium text-sm"
+                    </button>
+                    <button
+                      onClick={() => openTrainingPdf('user', 'download')}
+                      disabled={trainingLoading === 'user-download'}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50 font-medium text-sm disabled:opacity-50"
                     >
-                      <FaDownload />
+                      {trainingLoading === 'user-download' ? <FaSpinner className="animate-spin" /> : <FaDownload />}
                       Download
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
-              <strong>Share with your community:</strong> The User Quick Start Guide is designed to be shared with community members.
-              Download and email it, print copies, or link to it directly: <code className="bg-white px-1.5 py-0.5 rounded text-xs">/training/User-Quick-Start-Guide.pdf</code>
+            {trainingError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800 flex items-center gap-2">
+                <FaExclamationTriangle />
+                {trainingError}
+              </div>
+            )}
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-900">
+              <strong>Admin-only access:</strong> These training documents are only available to authenticated admin users.
+              To share the User Quick Start Guide with community members, download it first and distribute via email, print, or
+              your preferred channel.
             </div>
           </div>
         )}
